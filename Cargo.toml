@@ -1,0 +1,6 @@
+[package]
+name = "pbar"
+version = "0.1.0"
+authors = ["koushiro <https://github.com/koushiro>"]
+
+[dependencies]
