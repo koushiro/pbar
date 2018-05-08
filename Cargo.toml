@@ -4,3 +4,4 @@ version = "0.1.0"
 authors = ["koushiro <https://github.com/koushiro>"]
 
 [dependencies]
+terminal_size = "0.1"
