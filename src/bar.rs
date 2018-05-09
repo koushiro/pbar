@@ -1,5 +1,6 @@
 use std::io::{self, Write, Stdout, stdout};
 use std::time::{Duration, Instant};
+use std::thread;
 
 use terminal_size::{Width, terminal_size};
 
@@ -47,12 +48,12 @@ impl ProgressBar {
             total,
             current: 0,
 
-            title: String::from("title"),
+            title: String::with_capacity(w >> 1),
             bar_fmt: BarFormat::new(),
             refresh_interval: Duration::from_millis(200),
             width: w,
 
-            is_show_title: true,
+            is_show_title: false,
             is_show_percent: true,
             is_show_bar: true,
             is_show_counter: true,
@@ -70,11 +71,11 @@ impl ProgressBar {
         let fmt = fmt.into();
         if fmt.len() == 5 {
             let v: Vec<&str> = fmt.split("").collect();
-            self.bar_fmt.bar_start = v[1].to_string();
+            self.bar_fmt.start_symbol = v[1].to_string();
             self.bar_fmt.fill_symbol = v[2].to_string();
             self.bar_fmt.current_symbol = v[3].to_string();
             self.bar_fmt.empty_symbol = v[4].to_string();
-            self.bar_fmt.bar_end = v[5].to_string();
+            self.bar_fmt.end_symbol = v[5].to_string();
         }
         self
     }
@@ -90,9 +91,9 @@ impl ProgressBar {
     }
 
     fn write(&mut self) -> io::Result<()> {
-        let title_fmt = format!("{}: ", self.title);
+        let title_fmt = format!("{} ", self.title);
         let percent = self.current as f64 / self.total as f64 * 100f64;
-        let percent_fmt = format!(" {:.*}% ", 0, percent);
+        let percent_fmt = format!("{:.*}% ", 0, percent);
 
         if self.is_show_title {
             self.prefix += &title_fmt;
@@ -102,8 +103,8 @@ impl ProgressBar {
         }
 
         let counter_fmt = format!("{}/{} ", self.current, self.total);
-        let time_fmt = format!(" {} ", "time");
-        let speed_fmt = format!(" {} ", "speed");
+        let time_fmt = format!("{} ", "time");
+        let speed_fmt = format!("{} ", "speed");
         if self.is_show_counter {
             self.suffix += &counter_fmt;
         }
@@ -114,17 +115,18 @@ impl ProgressBar {
             self.suffix += &speed_fmt;
         }
 
-
-        let bar_fmt = format!(" {} ", "bar");
+        let bar_len = self.width - self.prefix.len() - self.suffix.len();
+        let bar_fmt = format!("{}{}{}{}{} ",
+                              self.bar_fmt.start_symbol,
+                              self.bar_fmt.fill_symbol,
+                              self.bar_fmt.current_symbol,
+                              self.bar_fmt.empty_symbol,
+                              self.bar_fmt.end_symbol);
         if self.is_show_bar {
             self.bar += &bar_fmt;
         }
 
-//        self.output.write("\r".as_bytes())?;
-        self.out += "\r";
-        self.out += &self.prefix;
-        self.out += &self.bar;
-        self.out += &self.suffix;
+        self.out = format!("\r{}{}{}", &self.prefix, &self.bar, &self.suffix);
         self.output.write(self.out.as_bytes())?;
         self.output.flush()?;
 
@@ -134,6 +136,15 @@ impl ProgressBar {
         self.out.clear();
 
         Ok(())
+    }
+
+    pub fn run(&mut self) {
+//        thread::spawn(|| {
+//            while !self.is_finished {
+//                self.update();
+//            }
+//            self.finish();
+//        });
     }
 
     fn finish(&mut self) {
@@ -187,21 +198,21 @@ fn terminal_width() -> usize {
 }
 
 pub struct BarFormat {
-    bar_start: String,
-    bar_end: String,
+    start_symbol: String,
     fill_symbol: String,
     current_symbol: String,
     empty_symbol: String,
+    end_symbol: String,
 }
 
 impl BarFormat {
     pub fn new() -> BarFormat {
         BarFormat {
-            bar_start: String::from("["),
-            bar_end: String::from("]"),
+            start_symbol: String::from("["),
             fill_symbol: String::from("#"),
             current_symbol: String::from(">"),
             empty_symbol: String::from("-"),
+            end_symbol: String::from("]"),
         }
     }
 }
