@@ -5,10 +5,10 @@ use std::thread;
 use std::time::Duration;
 
 fn main() {
-    let count = 500;
+    let count = 1000;
     let mut pbar = ProgressBar::new(count);
     pbar.refresh_interval(Duration::from_millis(1))
-        .show_title(false);
+        .title("Test:");
     for _ in 0..count {
         pbar.increase();
         thread::sleep(Duration::from_millis(10));

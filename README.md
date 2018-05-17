@@ -1,1 +1,1 @@
-Terminal progress bar for Rust.
+A terminal progress bar written in Rust.

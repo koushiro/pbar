@@ -1,7 +1,6 @@
 use std::io::{self, Write, Stdout, stdout};
 use std::time::{Duration, Instant};
 use std::iter::repeat;
-use std::thread;
 
 use terminal_size::{Width, terminal_size};
 
@@ -157,30 +156,23 @@ impl ProgressBar {
         self
     }
 
-    fn fmt_speed(&mut self) -> &mut ProgressBar {
+    fn fmt_speed(&mut self, speed: f64) -> &mut ProgressBar {
         if self.is_show_speed {
-            let elapsed_time
-                = self.current_time.duration_since(self.start_time);
-            let speed = self.current as f64 /
-                (elapsed_time.as_secs() as f64 + elapsed_time.subsec_nanos() as f64 / NANOS_PER_SEC as f64);
             self.speed_fmt = format!("{:.*}it/s ", 2, speed);
         }
         self
     }
 
-    fn fmt_time(&mut self) -> &mut ProgressBar {
+    fn fmt_time(&mut self, left_time: Duration) -> &mut ProgressBar {
         if self.is_show_time {
-
-            self.time_fmt = format!("{} ", "time");
+            self.time_fmt = format!("{}s ", left_time.as_secs());
         }
         self
     }
 
-    fn fmt_bar(&mut self) -> &mut ProgressBar {
+    fn fmt_bar(&mut self, percent: f64) -> &mut ProgressBar {
         if self.is_show_bar {
-            let percent = self.current as f64 / self.total as f64;
             let percent_len = 4usize;
-
             let bar_len = self.width - self.title_fmt.len()
                 - self.speed_fmt.len() - self.time_fmt.len() - percent_len - 3;
             let fill_len = (percent * bar_len as f64) as usize;
@@ -207,16 +199,25 @@ impl ProgressBar {
         self
     }
 
-    fn fmt_percent(&mut self) -> &mut ProgressBar {
+    fn fmt_percent(&mut self, percent: f64) -> &mut ProgressBar {
         if self.is_show_percent {
-            let percent = (self.current as f64 / self.total as f64 * 100f64) as u8;
-            self.percent_fmt = format!("{}%", percent);
+            self.percent_fmt = format!("{}%", (percent * 100f64) as u8);
         }
         self
     }
 
     fn write(&mut self) -> io::Result<()> {
-        self.fmt_title().fmt_speed().fmt_time().fmt_bar().fmt_percent();
+        let elapsed_time
+            = self.current_time.duration_since(self.start_time);
+        let speed = self.current as f64 /
+            (elapsed_time.as_secs() as f64 +
+                elapsed_time.subsec_nanos() as f64 / NANOS_PER_SEC as f64);
+        let left_time = elapsed_time *
+            (self.total - self.current) as u32 / self.current as u32;
+        let percent = self.current as f64 / self.total as f64;
+
+        self.fmt_title().fmt_speed(speed).fmt_time(left_time)
+            .fmt_bar(percent).fmt_percent(percent);
 
         self.output.write_fmt(format_args!(
             "\r{}{}{}{}{}",
