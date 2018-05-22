@@ -1,4 +1,6 @@
 extern crate terminal_size;
 
-pub mod bar;
+mod bar;
+mod util;
+
 pub use bar::ProgressBar;

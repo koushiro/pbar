@@ -4,7 +4,7 @@ use std::iter::repeat;
 
 use terminal_size::{Width, terminal_size};
 
-const NANOS_PER_SEC: u32 = 1_000_000_000;
+use util::*;
 
 macro_rules! repeat {
     ($s: expr, $n: expr) => {{
@@ -86,7 +86,6 @@ impl ProgressBar {
         self.bar_symbol = BarSymbol::new();
         self.refresh_interval = Duration::from_millis(200);
         self.width = terminal_width() - 1;
-        println!("terminal width = {}", self.width);
         self.is_show_title = true;
         self.is_show_time = true;
         self.is_show_speed = false;
@@ -158,14 +157,14 @@ impl ProgressBar {
 
     fn fmt_speed(&mut self, speed: f64) -> &mut ProgressBar {
         if self.is_show_speed {
-            self.speed_fmt = format!("{:.*}it/s ", 2, speed);
+            self.speed_fmt = format!("{:.*}it/s  ", 2, speed);
         }
         self
     }
 
     fn fmt_time(&mut self, left_time: Duration) -> &mut ProgressBar {
         if self.is_show_time {
-            self.time_fmt = format!("{}s ", left_time.as_secs());
+            self.time_fmt = format!("{}s  ", left_time.as_secs());
         }
         self
     }
@@ -178,7 +177,7 @@ impl ProgressBar {
             let fill_len = (percent * bar_len as f64) as usize;
             let empty_len = bar_len - fill_len;
 
-            let bar_fmt = match self.is_finished {
+            self.bar_fmt = match self.is_finished {
                 false => {
                     format!("{}{}{}{}{} ",
                             self.bar_symbol.start,
@@ -194,7 +193,6 @@ impl ProgressBar {
                             self.bar_symbol.end)
                 },
             };
-            self.bar_fmt = bar_fmt;
         }
         self
     }
@@ -207,11 +205,8 @@ impl ProgressBar {
     }
 
     fn write(&mut self) -> io::Result<()> {
-        let elapsed_time
-            = self.current_time.duration_since(self.start_time);
-        let speed = self.current as f64 /
-            (elapsed_time.as_secs() as f64 +
-                elapsed_time.subsec_nanos() as f64 / NANOS_PER_SEC as f64);
+        let elapsed_time = self.current_time.duration_since(self.start_time);
+        let speed = self.current as f64 / duration_to_secs(elapsed_time);
         let left_time = elapsed_time *
             (self.total - self.current) as u32 / self.current as u32;
         let percent = self.current as f64 / self.total as f64;
