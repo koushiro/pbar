@@ -95,3 +95,56 @@ impl fmt::Display for FormattedUnit {
         }
     }
 }
+
+pub enum LayoutElement {
+    Percent,
+    Bar,
+    ETA,
+    Elapsed,
+    Prefix,
+    Message,
+    Speed,
+    Current,
+    Total,
+}
+
+pub enum LayoutAlignment {
+    Left,
+    Center,
+    Right,
+}
+
+
+
+#[test]
+fn test_duration_convert_func() {
+    let d = Duration::new(1, 234);
+    assert_eq!(secs_to_duration(duration_to_secs(d)), d)
+}
+
+#[test]
+fn test_duration_format() {
+    let mut basic = FormattedDuration::Basic(Duration::new(30, 0));
+    assert_eq!(String::from("00:00:30"), format!(basic));
+    basic = FormattedDuration::Basic(Duration::new(90, 0));
+    assert_eq!(String::from("00:01:30"), format!(basic));
+    basic = FormattedDuration::Basic(Duration::new(3690, 0));
+    assert_eq!(String::from("01:01:30"), format!(basic));
+    basic = FormattedDuration::Basic(Duration::new(90090, 0));
+    assert_eq!(String::from("1d:01:01:30"), format!(basic));
+
+    let mut readable = FormattedDuration::Readable(Duration::new(30, 0));
+    assert_eq!(String::from("30s"), format!(readable));
+    readable = FormattedDuration::Readable(Duration::new(90, 0));
+    assert_eq!(String::from("1m30s"), format!(readable));
+    readable = FormattedDuration::Readable(Duration::new(3690, 0));
+    assert_eq!(String::from("1h1m30s"), format!(readable));
+    basic = FormattedDuration::Readable(Duration::new(90090, 0));
+    assert_eq!(String::from("1d1h1m30s"), format!(basic));
+}
+
+#[test]
+fn test_unit_format() {
+    let mut iter = FormattedUnit::Iter(1_048_576);
+
+}

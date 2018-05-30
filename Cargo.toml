@@ -4,6 +4,8 @@ version = "0.1.0"
 authors = ["koushiro <https://github.com/koushiro>"]
 description = "A terminal progress bar."
 license = "MIT"
+keywords = ["terminal", "progress", "bar", "cli"]
 
 [dependencies]
-terminal_size = "0.1"
+terminal_size = "*"
+regex = "*"
