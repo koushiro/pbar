@@ -7,5 +7,10 @@ license = "MIT"
 keywords = ["terminal", "progress", "bar", "cli"]
 
 [dependencies]
-terminal_size = "*"
-regex = "*"
+
+
+[target.'cfg(unix)'.dependencies]
+libc = "*"
+
+[target.'cfg(windows)'.dependencies]
+winapi = { version = "0.3", features = ["consoleapi", "processenv","winbase",  "wincon", "winnt"] }

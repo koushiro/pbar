@@ -1,6 +1,13 @@
-extern crate terminal_size;
+#[cfg(windows)] extern crate winapi;
+#[cfg(unix)] extern crate libc;
 
-mod bar;
+mod term;
+
+//mod bar;
+//mod multi;
+//mod layout;
 mod util;
+mod format;
 
-pub use bar::ProgressBar;
+//pub use bar::{ProgressBar, ProgressBarStyle};
+//pub use multi::MultiProgressBar;

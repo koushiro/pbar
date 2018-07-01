@@ -1,14 +1,16 @@
-extern crate pbar;
-use pbar::ProgressBar;
-
-use std::thread;
-use std::time::Duration;
+//extern crate pbar;
+//use pbar::ProgressBar;
+//use std::thread;
+//use std::time::Duration;
 
 fn main() {
-    let count = 1000;
-    let mut pbar = ProgressBar::new(count);
-    for _ in 0..count {
-        pbar.increase();
-        thread::sleep(Duration::from_millis(10));
-    }
+//    let count = 1000;
+//    let mut pbar = ProgressBar::new(count);
+//    for _ in 0..count {
+//        pbar.increase();
+//        thread::sleep(Duration::from_millis(10));
+//    }
+//    pbar.finish_with_msg("Done.");
+
+//    ██░
 }
