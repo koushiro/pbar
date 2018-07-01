@@ -4,7 +4,7 @@ use std::os::windows::io::{AsRawHandle, RawHandle};
 use winapi::um::{
     consoleapi::GetConsoleMode,
     processenv::GetStdHandle,
-    winbase::STD_OUTPUT_HANDLE,
+    winbase::{STD_OUTPUT_HANDLE, STD_ERROR_HANDLE},
     wincon::{
         COORD, SMALL_RECT, CONSOLE_SCREEN_BUFFER_INFO,
         GetConsoleScreenBufferInfo,

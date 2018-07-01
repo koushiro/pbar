@@ -48,9 +48,14 @@ impl AsRawHandle for Term {
     fn as_raw_handle(&self) -> RawHandle {
         use winapi::um::{
             processenv::GetStdHandle,
-            winbase::STD_OUTPUT_HANDLE,
+            winbase::{STD_OUTPUT_HANDLE, STD_ERROR_HANDLE},
         };
-        unsafe { GetStdHandle(STD_OUTPUT_HANDLE) as RawHandle }
+        match self.target {
+            TermTarget::Stdout =>
+                unsafe { GetStdHandle(STD_OUTPUT_HANDLE) as RawHandle },
+            TermTarget::Stderr =>
+                unsafe { GetStdHandle(STD_ERROR_HANDLE) as RawHandle },
+        }
     }
 }
 
