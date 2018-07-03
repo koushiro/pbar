@@ -1,6 +1,5 @@
-use std::io::{self, Write};
-use std::sync::Mutex;
 use std::os::windows::io::{AsRawHandle, RawHandle};
+
 use winapi::um::{
     consoleapi::GetConsoleMode,
     processenv::GetStdHandle,
@@ -10,9 +9,21 @@ use winapi::um::{
         GetConsoleScreenBufferInfo,
         SetConsoleCursorPosition,
     },
-    winnt::HANDLE,
+    winnt::{HANDLE, CHAR},
 };
-use term::Term;
+
+use term::{Term, TermTarget};
+
+impl AsRawHandle for Term {
+    fn as_raw_handle(&self) -> RawHandle {
+        match self.target {
+            TermTarget::Stdout =>
+                unsafe { GetStdHandle(STD_OUTPUT_HANDLE) as RawHandle },
+            TermTarget::Stderr =>
+                unsafe { GetStdHandle(STD_ERROR_HANDLE) as RawHandle },
+        }
+    }
+}
 
 pub fn is_term(term: &Term) -> bool {
     match get_console_mode(term.as_raw_handle() as HANDLE) {
@@ -35,8 +46,7 @@ pub fn move_cursor_up(term: &Term, n: usize) -> Result<(), String> {
     match get_console_screen_buffer_info(term.as_raw_handle() as HANDLE) {
         Some((handle, csbi)) => {
             let set_result = set_console_cursor_pos(
-                handle,
-                0, csbi.dwCursorPosition.Y - n as i16
+                handle, 0, csbi.dwCursorPosition.Y - n as i16
             );
             match set_result {
                 true => Ok(()),
@@ -51,8 +61,7 @@ pub fn move_cursor_down(term: &Term, n: usize) -> Result<(), String> {
     match get_console_screen_buffer_info(term.as_raw_handle() as HANDLE) {
         Some((handle, csbi)) => {
             let set_result = set_console_cursor_pos(
-                handle,
-                0, csbi.dwCursorPosition.Y + n as i16
+                handle, 0, csbi.dwCursorPosition.Y + n as i16
             );
             match set_result {
                 true => Ok(()),
@@ -111,6 +120,12 @@ fn set_console_cursor_pos(handle: HANDLE, x: i16, y: i16) -> bool {
         0 => false,
         _ => true,
     }
+}
+
+#[test]
+fn test_is_term() {
+    let term = Term::stdout();
+    assert_eq!(is_term(&term), true);
 }
 
 #[test]

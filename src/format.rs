@@ -3,15 +3,15 @@ use std::time::Duration;
 
 use util::*;
 
-const KiB: f64 = 1024.;
-const MiB: f64 = 1_048_576.;
-const GiB: f64 = 1_073_741_824.;
-const TiB: f64 = 1_099_511_627_776.;
+const KB: f64 = 1024.;
+const MB: f64 = 1_048_576.;
+const GB: f64 = 1_073_741_824.;
+const TB: f64 = 1_099_511_627_776.;
 
-const KB: f64 = 1e3;
-const MB: f64 = 1e6;
-const GB: f64 = 1e9;
-const TB: f64 = 1e12;
+const KB_DEC: f64 = 1e3;
+const MB_DEC: f64 = 1e6;
+const GB_DEC: f64 = 1e9;
+const TB_DEC: f64 = 1e12;
 
 pub enum FormattedDuration {
     Basic(Duration),
@@ -44,44 +44,41 @@ impl fmt::Display for FormattedDuration {
 }
 
 pub enum FormattedUnit {
-    No(u64),
-    Bytes(u64),
-    BytesDec(u64),
+    Default(f64),
+    Bytes(f64),
+    BytesDec(f64),
 }
 
 impl fmt::Display for FormattedUnit {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            FormattedUnit::No(unit) => {
-                let n = unit as f64;
-                match n {
-                    n if n >= TiB => write!(f, "{:.*}T", 2, n / TiB),
-                    n if n >= GiB => write!(f, "{:.*}G", 2, n / GiB),
-                    n if n >= MiB => write!(f, "{:.*}M", 2, n / MiB),
-                    n if n >= KiB => write!(f, "{:.*}K", 2, n / KiB),
-                    _ => write!(f, "{:.*}", 0, n),
+            FormattedUnit::Default(unit) => {
+                match unit {
+                    unit if unit >= TB => write!(f, "{:.*}T", 1, unit / TB),
+                    unit if unit >= GB => write!(f, "{:.*}G", 1, unit / GB),
+                    unit if unit >= MB => write!(f, "{:.*}M", 1, unit / MB),
+                    unit if unit >= KB => write!(f, "{:.*}K", 1, unit / KB),
+                    _ => write!(f, "{:.*}", 0, unit),
                 }
             },
 
             FormattedUnit::Bytes(unit) => {
-                let n = unit as f64;
-                match n {
-                    n if n >= TiB => write!(f, "{:.*}TiB", 2, n / TiB),
-                    n if n >= GiB => write!(f, "{:.*}GiB", 2, n / GiB),
-                    n if n >= MiB => write!(f, "{:.*}MiB", 2, n / MiB),
-                    n if n >= KiB => write!(f, "{:.*}KiB", 2, n / KiB),
-                    _ => write!(f, "{:.*}B", 0, n),
+                match unit {
+                    unit if unit >= TB => write!(f, "{:.*}TiB", 1, unit / TB),
+                    unit if unit >= GB => write!(f, "{:.*}GiB", 1, unit / GB),
+                    unit if unit >= MB => write!(f, "{:.*}MiB", 1, unit / MB),
+                    unit if unit >= KB => write!(f, "{:.*}KiB", 1, unit / KB),
+                    _ => write!(f, "{:.*}B", 0, unit),
                 }
             },
 
             FormattedUnit::BytesDec(unit) => {
-                let n = unit as f64;
-                match n {
-                    n if n >= TB => write!(f, "{:.*}TB", 2, n / TB),
-                    n if n >= GB => write!(f, "{:.*}GB", 2, n / GB),
-                    n if n >= MB => write!(f, "{:.*}MB", 2, n / MB),
-                    n if n >= KB => write!(f, "{:.*}KB", 2, n / KB),
-                    _ => write!(f, "{:.*}B", 0, n),
+                match unit {
+                    unit if unit >= TB_DEC => write!(f, "{:.*}TB", 1, unit / TB_DEC),
+                    unit if unit >= GB_DEC => write!(f, "{:.*}GB", 1, unit / GB_DEC),
+                    unit if unit >= MB_DEC => write!(f, "{:.*}MB", 1, unit / MB_DEC),
+                    unit if unit >= KB_DEC => write!(f, "{:.*}KB", 1, unit / KB_DEC),
+                    _ => write!(f, "{:.*}B", 0, unit),
                 }
             }
         }

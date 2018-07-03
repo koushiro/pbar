@@ -1,12 +1,80 @@
-use std::io::{self, Write, Stdout, stdout};
+use std::io::{self, Write};
 use std::time::{Duration, Instant};
 use std::iter::repeat;
 use std::borrow::Cow;
-use std::thread;
-use std::sync::{mpsc, Arc, Mutex};
+use std::sync::{Arc, RwLock};
 
+use term::*;
 use util::*;
 use format::*;
+
+struct ProgressBarContext {
+    target: Term,
+    width: usize,
+    current: u64,
+    total: u64,
+    title: String,
+
+    start_time: Instant,
+    last_refresh_time: Instant,
+    refresh_rate: Duration,
+}
+
+impl ProgressBarContext {
+    pub fn is_finish(&self) -> bool {
+        if self.current < self.total {
+            false
+        } else {
+            true
+        }
+    }
+
+    pub fn should_draw(&mut self) -> bool {
+        let now = Instant::now();
+        if !self.is_finish() &&
+            now.duration_since(self.last_refresh_time) >= self.refresh_rate {
+            self.last_refresh_time = now;
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn current(&self) -> (u64, u64) {
+        (self.current, self.total)
+    }
+
+    pub fn percent(&self) -> f64 {
+        let p = match (self.current, self.total) {
+            (_, 0) => 1.0,
+            (0, _) => 0.0,
+            (current, total) => current as f64 / total as f64,
+        };
+        p
+    }
+
+    pub fn speed(&self) -> f64 {
+        self.current as f64 / duration_to_secs(self.time_elapsed())
+    }
+
+    pub fn time_elapsed(&self) -> Duration {
+        self.last_refresh_time.duration_since(self.start_time)
+    }
+
+    pub fn time_left(&self) -> Duration {
+        if self.is_finish() {
+            return Duration::new(0, 0);
+        }
+
+        let d = self.time_elapsed();
+        secs_to_duration(duration_to_secs(d) *
+            (self.total - self.current) as f64 / self.current as f64)
+    }
+
+    pub fn time_total(&self) -> Duration {
+        self.time_left() + self.time_elapsed()
+    }
+}
 
 pub struct ProgressBarStyle {
     bar_symbols: Vec<char>,
@@ -22,97 +90,14 @@ impl ProgressBarStyle {
         }
     }
     /// Set the bar symbols `(begin, fill, current, empty, end)`.
-    pub fn set_bar_symbols(mut self, s: &str) -> ProgressBarStyle {
+    pub fn set_bar_symbols(&mut self, s: &str) -> &ProgressBarStyle {
         self.bar_symbols = s.chars().collect();
         self
     }
-    /// Set the layout of progress bar.
-    pub fn set_layout(mut self, s: &str) -> ProgressBarStyle {
+    /// TODO: Set the layout of progress bar.
+    fn set_layout(&mut self, s: &str) -> &ProgressBarStyle {
         self.layout = Cow::Owned(s.into());
         self
-    }
-}
-
-enum ProgressBarStatus {
-    InProgress,
-    DoneVisible,
-    DoneClear,
-}
-
-struct ProgressBarContext {
-    output: Stdout,
-    status: ProgressBarStatus,
-    width: usize,
-    current: u64,
-    total: u64,
-    prefix: String,
-    message: String,
-
-    start: Instant,
-    change: Instant,
-    refresh_rate: Duration,
-}
-
-impl ProgressBarContext {
-    pub fn new(total: u64) -> ProgressBarContext {
-        ProgressBarContext {
-            output: stdout(),
-            status: ProgressBarStatus::InProgress,
-            width: 79,
-            current: 0,
-            total,
-            prefix: "".into(),
-            message: "".into(),
-
-            start: Instant::now(),
-            change: Instant::now(),
-            refresh_rate: Duration::new(200, 0),
-        }
-    }
-
-    pub fn is_finished(&self) -> bool {
-        match self.status {
-            ProgressBarStatus::InProgress => false,
-            _ => true,
-        }
-    }
-
-    pub fn should_draw(&self) -> bool {
-        match self.status {
-            ProgressBarStatus::DoneClear => false,
-            _ => true,
-        }
-    }
-
-    pub fn percent(&self) -> f64 {
-        let p = match (self.current, self.total) {
-            (_, 0) => 1.0,
-            (0, _) => 0.0,
-            (current, total) => current as f64 / total as f64,
-        };
-        p
-    }
-
-    pub fn current(&self) -> (u64, u64) {
-        (self.current, self.total)
-    }
-
-    pub fn prefix(&self) -> &str {
-        &self.prefix
-    }
-
-    pub fn message(&self) -> &str {
-        &self.message
-    }
-
-    pub fn eta(&self) -> Duration {
-        if self.is_finished() {
-            return Duration::new(0, 0);
-        }
-
-        let d = self.change.duration_since(self.start);
-        secs_to_duration(duration_to_secs(d) *
-            (self.total - self.current) as f64 / self.current as f64)
     }
 }
 
@@ -122,91 +107,107 @@ pub struct ProgressBar {
 }
 
 impl ProgressBar {
-    /// Construct a progress bar.
+    /// Construct a progress bar with default style.
     pub fn new(total: u64) -> ProgressBar {
+        let target = Term::stdout();
+        let width = target.terminal_size().0;
         ProgressBar {
-            ctxt: ProgressBarContext::new(total),
+            ctxt: ProgressBarContext {
+                target,
+                width,
+                current: 0,
+                total,
+                title: "".into(),
+
+                start_time: Instant::now(),
+                last_refresh_time: Instant::now(),
+                refresh_rate: Duration::from_millis(500),
+            },
             style: ProgressBarStyle::default(),
         }
     }
-    /// Start the drawing thread.
-    pub fn start(&self) {
-        self.ctxt.start = Instant::now();
 
-    }
-    ///
-    pub fn set_style(&self, style: ProgressBarStyle) -> &ProgressBar {
+    /// Set progress bar style.
+    pub fn set_style(&mut self, style: ProgressBarStyle) -> &mut ProgressBar {
         self.style = style;
         self
     }
-    ///
-    pub fn set_prefix(&self, prefix: &str) -> &ProgressBar {
-        self.update(|ctxt| {
-            ctxt.prefix = prefix.into();
-        });
+
+    /// Set progress bar message.
+    pub fn set_title(&mut self, msg: &str) -> &mut ProgressBar {
+        self.ctxt.title = msg.into();
         self
     }
-    ///
-    pub fn set_message(&self, msg: &str) -> &ProgressBar {
-        self.update(|ctxt| {
-            ctxt.message = msg.into();
-        });
+
+    /// Set progress bar width.
+    pub fn set_width(&mut self, width: usize) -> &mut ProgressBar {
+        self.ctxt.width = width;
         self
     }
-    ///
-    pub fn set_width(&self, width: usize) -> &ProgressBar {
-        self.update(|ctxt| {
-            ctxt.width = width;
-        });
+
+    /// Set refresh rate.
+    pub fn set_refresh_rate(&mut self, rate: Duration) ->&mut ProgressBar {
+        self.ctxt.refresh_rate = rate;
         self
     }
-    ///
-    pub fn set(&self, value: u64) -> u64 {
-        self.update(|ctxt| {
-            ctxt.current = value;
-        });
+
+    /// Set progress bar current value.
+    pub fn set(&mut self, value: u64) -> u64 {
+        self.ctxt.current = value;
+        self.update(false);
         self.ctxt.current
     }
-    ///
-    pub fn add(&self, value: u64) -> u64 {
-        self.update(|ctxt| {
-            ctxt.current += value;
-        });
-        self.ctxt.current
+
+    /// Add progress bar current value.
+    pub fn add(&mut self, value: u64) -> u64 {
+        let value = self.ctxt.current + value;
+        self.set(value)
     }
-    ///
-    pub fn increase(&self) -> u64 {
+
+    /// Increase progress bar current value.
+    pub fn increase(&mut self) -> u64 {
         self.add(1)
     }
-    ///
-    pub fn finish(&self) {
-        self.update(|ctxt| {
-            ctxt.current = ctxt.total;
-            ctxt.status = ProgressBarStatus::DoneVisible;
-        })
+
+    /// Finish progress.
+    pub fn finish(&mut self) {
+        self.ctxt.current = self.ctxt.total;
+        self.update(true);
     }
-    ///
-    pub fn finish_with_msg(&self, msg: &str) {
-        self.update(|ctxt| {
-            ctxt.message = msg.into();
-            ctxt.current = ctxt.total;
-            ctxt.status = ProgressBarStatus::DoneVisible;
-        })
+
+    /// Finish progress and write message 'msg' below the progress bar.
+    pub fn finish_with_msg(&mut self, msg: &str) {
+        self.ctxt.current = self.ctxt.total;
+        self.update(true);
+        self.ctxt.target.write_target(format!("\n{}", msg).as_bytes());
     }
-    ///
-    pub fn finish_and_clear(&self) {
-        self.update(|ctxt| {
-            ctxt.current = ctxt.total;
-            ctxt.status = ProgressBarStatus::DoneClear;
-        })
+
+    /// Finish progress and replace the progress bar with message 'msg'.
+    pub fn finish_with_clear(&mut self, msg: &str) {
+        self.ctxt.current = self.ctxt.total;
+        self.update(true);
+
+    }
+
+    fn update(&mut self, is_force: bool) {
+        if is_force || self.ctxt.should_draw() {
+            self.draw();
+        }
+    }
+
+    fn draw(&mut self) {
+        let s: String = format!("\r{} {} {} {} {}",
+            self.format_title(), self.format_speed(self.ctxt.speed()),
+            self.format_time(self.ctxt.time_left()),
+            self.format_percent(), self.format_bar(30)
+        );
+        self.ctxt.target.write_target(s.as_bytes());
     }
 }
 
 impl ProgressBar {
-    fn update<F: FnOnce(&mut ProgressBarContext)>(&self, callback: F) {
-        let mut ctxt = self.ctxt;
-        callback(&mut ctxt);
-        self.draw().ok();
+    fn format_title(&self) -> String {
+        format!("{}", self.ctxt.title)
     }
 
     fn format_bar(&self, bar_width: usize) -> String {
@@ -224,39 +225,17 @@ impl ProgressBar {
                 begin_part, fill_part, cur_part, empty_part, end_part)
     }
 
-    fn format_layout(&self) -> Vec<String> {
-//        let (current, total) = self.current();
-//        let vec = vec![];
-//
-//        for line in self.style.layout.lines() {
-//
-//        }
-//
-//        vec
-        vec![]
+    fn format_percent(&self) -> String {
+        format!("{}%", (self.ctxt.percent() * 100f64) as u64)
     }
 
-    fn draw(&self) -> io::Result<()> {
-//        let elapsed_time = self.current_time.duration_since(self.start_time);
-//        let speed = self.current as f64 / duration_to_secs(elapsed_time);
-//        let left_time = elapsed_time *
-//            (self.total - self.current) as u32 / self.current as u32;
-//        let percent = self.current as f64 / self.total as f64;
-//
-//        self.format_title().format_speed(speed).format_time(left_time)
-//            .format_bar(percent).format_percent(percent);
-//
-//        self.output.write_fmt(format_args!(
-//            "\r{}{}{}{}{}",
-//            &self.title_fmt, &self.speed_fmt, &self.time_fmt,
-//            &self.bar_fmt, &self.percent_fmt))?;
-//        self.output.flush()?;
-//
-//        self.title_fmt.clear();
-//        self.speed_fmt.clear();
-//        self.time_fmt.clear();
-//        self.bar_fmt.clear();
-//        self.percent_fmt.clear();
-        Ok(())
+    fn format_time(&self, time: Duration) -> String {
+        let format_time = FormattedDuration::Readable(time);
+        format!("{}", format_time)
+    }
+
+    fn format_speed(&self, speed: f64) -> String {
+        let format_speed = FormattedUnit::Default(speed);
+        format!("{}it/s", format_speed)
     }
 }

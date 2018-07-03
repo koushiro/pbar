@@ -1,10 +1,7 @@
 use std::io::{self, Write};
-use std::sync::Mutex;
 
-#[cfg(target_os = "windows")]
-use std::os::windows::io::{AsRawHandle, RawHandle};
-
-pub const TERM_DEFAULT_WIDTH: usize = 79;
+const TERM_DEFAULT_WIDTH: usize = 79;
+const TERM_DEFAULT_HEIGHT: usize = 5;
 
 enum TermTarget {
     Stdout,
@@ -28,7 +25,24 @@ impl Term {
         }
     }
 
-    fn write_target(&self, bytes: &[u8]) -> io::Result<()> {
+    pub fn is_term(&self) -> bool {
+        is_term(self)
+    }
+
+    pub fn terminal_size(&self) -> (usize, usize) {
+        terminal_size(self)
+            .unwrap_or((TERM_DEFAULT_WIDTH, TERM_DEFAULT_HEIGHT))
+    }
+
+    pub fn move_cursor_up(&self, n: usize) -> Result<(), String> {
+        move_cursor_up(self, n)
+    }
+
+    pub fn move_cursor_down(&self, n: usize) -> Result<(), String> {
+        move_cursor_down(self, n)
+    }
+
+    pub fn write_target(&self, bytes: &[u8]) -> io::Result<()> {
         match self.target {
             TermTarget::Stdout => {
                 io::stdout().write_all(bytes)?;
@@ -40,22 +54,6 @@ impl Term {
             },
         }
         Ok(())
-    }
-}
-
-#[cfg(target_os = "windows")]
-impl AsRawHandle for Term {
-    fn as_raw_handle(&self) -> RawHandle {
-        use winapi::um::{
-            processenv::GetStdHandle,
-            winbase::{STD_OUTPUT_HANDLE, STD_ERROR_HANDLE},
-        };
-        match self.target {
-            TermTarget::Stdout =>
-                unsafe { GetStdHandle(STD_OUTPUT_HANDLE) as RawHandle },
-            TermTarget::Stderr =>
-                unsafe { GetStdHandle(STD_ERROR_HANDLE) as RawHandle },
-        }
     }
 }
 

@@ -1,4 +1,4 @@
-use std::time::{Instant, Duration};
+use std::time::Duration;
 
 const NANOS_PER_SEC: f64 = 1e9;
 
