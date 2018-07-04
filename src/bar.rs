@@ -2,7 +2,6 @@ use std::io::{self, Write};
 use std::time::{Duration, Instant};
 use std::iter::repeat;
 use std::borrow::Cow;
-use std::sync::{Arc, RwLock};
 
 use term::*;
 use util::*;
@@ -179,14 +178,22 @@ impl ProgressBar {
     pub fn finish_with_msg(&mut self, msg: &str) {
         self.ctxt.current = self.ctxt.total;
         self.update(true);
-        self.ctxt.target.write_target(format!("\n{}", msg).as_bytes());
+        self.ctxt.target
+            .write_target(format!("\n{}", msg).as_bytes())
+            .expect("write to target fail.");
     }
 
     /// Finish progress and replace the progress bar with message 'msg'.
     pub fn finish_with_clear(&mut self, msg: &str) {
         self.ctxt.current = self.ctxt.total;
         self.update(true);
-
+        let msg_len = msg.len();
+        let mut s = format!("\r{}{}", msg,
+                            repeat(" ").take(self.ctxt.width - msg_len)
+                                .collect::<String>());
+        self.ctxt.target
+            .write_target(s.as_bytes())
+            .expect("write to target fail.");
     }
 
     fn update(&mut self, is_force: bool) {
@@ -201,7 +208,9 @@ impl ProgressBar {
             self.format_time(self.ctxt.time_left()),
             self.format_percent(), self.format_bar(30)
         );
-        self.ctxt.target.write_target(s.as_bytes());
+        self.ctxt.target
+            .write_target(s.as_bytes())
+            .expect("write to target fail.");
     }
 }
 
@@ -236,6 +245,6 @@ impl ProgressBar {
 
     fn format_speed(&self, speed: f64) -> String {
         let format_speed = FormattedUnit::Default(speed);
-        format!("{}it/s", format_speed)
+        format!("{}iter/s", format_speed)
     }
 }

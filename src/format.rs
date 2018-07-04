@@ -64,10 +64,10 @@ impl fmt::Display for FormattedUnit {
 
             FormattedUnit::Bytes(unit) => {
                 match unit {
-                    unit if unit >= TB => write!(f, "{:.*}TiB", 1, unit / TB),
-                    unit if unit >= GB => write!(f, "{:.*}GiB", 1, unit / GB),
-                    unit if unit >= MB => write!(f, "{:.*}MiB", 1, unit / MB),
-                    unit if unit >= KB => write!(f, "{:.*}KiB", 1, unit / KB),
+                    unit if unit >= TB => write!(f, "{:.*}TB", 1, unit / TB),
+                    unit if unit >= GB => write!(f, "{:.*}GB", 1, unit / GB),
+                    unit if unit >= MB => write!(f, "{:.*}MB", 1, unit / MB),
+                    unit if unit >= KB => write!(f, "{:.*}KB", 1, unit / KB),
                     _ => write!(f, "{:.*}B", 0, unit),
                 }
             },
@@ -108,5 +108,36 @@ fn test_duration_format() {
 
 #[test]
 fn test_unit_format() {
+    let mut default = FormattedUnit::Default(TB+256f64*GB);
+    assert_eq!(String::from("1.2T"), format!("{}", default));
+    default = FormattedUnit::Default(2048f64*MB);
+    assert_eq!(String::from("2.0G"), format!("{}", default));
+    default = FormattedUnit::Default(2f64*MB+256f64*KB);
+    assert_eq!(String::from("2.2M"), format!("{}", default));
+    default = FormattedUnit::Default(2f64*KB+512f64);
+    assert_eq!(String::from("2.5K"), format!("{}", default));
+    default = FormattedUnit::Default(999f64);
+    assert_eq!(String::from("999"), format!("{}", default));
 
+    let mut bytes = FormattedUnit::Bytes(TB+256f64*GB);
+    assert_eq!(String::from("1.2TB"), format!("{}", bytes));
+    bytes = FormattedUnit::Bytes(2048f64*MB);
+    assert_eq!(String::from("2.0GB"), format!("{}", bytes));
+    bytes = FormattedUnit::Bytes(2f64*MB+256f64*KB);
+    assert_eq!(String::from("2.2MB"), format!("{}", bytes));
+    bytes = FormattedUnit::Bytes(2f64*KB+512f64);
+    assert_eq!(String::from("2.5KB"), format!("{}", bytes));
+    bytes = FormattedUnit::Bytes(999f64);
+    assert_eq!(String::from("999B"), format!("{}", bytes));
+
+    let mut bytes_dec = FormattedUnit::BytesDec(TB_DEC+256f64*GB_DEC);
+    assert_eq!(String::from("1.3TB"), format!("{}", bytes_dec));
+    bytes_dec = FormattedUnit::BytesDec(2048f64*MB_DEC);
+    assert_eq!(String::from("2.0GB"), format!("{}", bytes_dec));
+    bytes_dec = FormattedUnit::BytesDec(2f64*MB_DEC+256f64*KB_DEC);
+    assert_eq!(String::from("2.3MB"), format!("{}", bytes_dec));
+    bytes_dec = FormattedUnit::BytesDec(2f64*KB_DEC+512f64);
+    assert_eq!(String::from("2.5KB"), format!("{}", bytes_dec));
+    bytes_dec = FormattedUnit::BytesDec(999f64);
+    assert_eq!(String::from("999B"), format!("{}", bytes_dec));
 }
