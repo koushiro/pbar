@@ -2,13 +2,64 @@ use std::io::{self, Write};
 use std::time::{Duration, Instant};
 use std::iter::repeat;
 use std::borrow::Cow;
+use std::sync::{mpsc, Mutex};
 
 use term::*;
 use util::*;
 use format::*;
 
+pub struct ProgressBarDrawInfo {
+    pub line: String,
+    pub done: bool,
+    pub force: bool,
+}
+
+pub enum ProgressBarTargetKind {
+    Term(Term),
+    Remote(usize, Mutex<mpsc::Sender<(usize, ProgressBarDrawInfo)>>),
+}
+
+pub struct ProgressBarTarget {
+    kind: ProgressBarTargetKind,
+}
+
+impl ProgressBarTarget {
+    pub fn stdout() -> ProgressBarTarget {
+        ProgressBarTarget {
+            kind: ProgressBarTargetKind::Term(Term::stdout()),
+        }
+    }
+
+    pub fn stderr() -> ProgressBarTarget {
+        ProgressBarTarget {
+            kind: ProgressBarTargetKind::Term(Term::stderr()),
+        }
+    }
+
+    pub fn remote(index: usize,
+                  chan: Mutex<mpsc::Sender<(usize, ProgressBarDrawInfo)>>)
+        -> ProgressBarTarget {
+        ProgressBarTarget {
+            kind: ProgressBarTargetKind::Remote(index, chan),
+        }
+    }
+
+    pub fn draw_or_send(&self, info: ProgressBarDrawInfo) -> io::Result<()> {
+        match self.kind {
+            ProgressBarTargetKind::Term(ref term) => {
+                term.write_target(info.line.as_bytes());
+            },
+            ProgressBarTargetKind::Remote(index, ref chan) => {
+                chan.lock().unwrap()
+                    .send((index, info)).unwrap();
+            },
+        }
+        Ok(())
+    }
+}
+
 struct ProgressBarContext {
-    target: Term,
+    target: ProgressBarTarget,
     width: usize,
     current: u64,
     total: u64,
@@ -71,10 +122,11 @@ impl ProgressBarContext {
     }
 
     pub fn time_total(&self) -> Duration {
-        self.time_left() + self.time_elapsed()
+        self.time_elapsed() + self.time_left()
     }
 }
 
+#[derive(Clone)]
 pub struct ProgressBarStyle {
     bar_symbols: Vec<char>,
     layout: Cow<'static, str>,
@@ -84,17 +136,17 @@ impl ProgressBarStyle {
     /// Return the default progress bar style.
     pub fn default() -> ProgressBarStyle {
         ProgressBarStyle {
-            bar_symbols: "[#>-]".chars().collect(),
+            bar_symbols: "[##-]".chars().collect(),
             layout: Cow::Borrowed("{}"),
         }
     }
     /// Set the bar symbols `(begin, fill, current, empty, end)`.
-    pub fn set_bar_symbols(&mut self, s: &str) -> &ProgressBarStyle {
+    pub fn set_bar_symbols(mut self, s: &str) -> ProgressBarStyle {
         self.bar_symbols = s.chars().collect();
         self
     }
     /// TODO: Set the layout of progress bar.
-    fn set_layout(&mut self, s: &str) -> &ProgressBarStyle {
+    fn set_layout(mut self, s: &str) -> ProgressBarStyle {
         self.layout = Cow::Owned(s.into());
         self
     }
@@ -108,8 +160,8 @@ pub struct ProgressBar {
 impl ProgressBar {
     /// Construct a progress bar with default style.
     pub fn new(total: u64) -> ProgressBar {
-        let target = Term::stdout();
-        let width = target.terminal_size().0;
+        let target = ProgressBarTarget::stdout();
+        let width = Term::stdout().terminal_size().0;
         ProgressBar {
             ctxt: ProgressBarContext {
                 target,
@@ -126,44 +178,49 @@ impl ProgressBar {
         }
     }
 
-    /// Set progress bar style.
+    /// Set customize style for the progress bar.
     pub fn set_style(&mut self, style: ProgressBarStyle) -> &mut ProgressBar {
         self.style = style;
         self
     }
 
-    /// Set progress bar message.
+    /// Set target for the progress bar
+    pub fn set_target(&mut self, target: ProgressBarTarget) {
+        self.ctxt.target = target;
+    }
+
+    /// Set title of the progress bar.
     pub fn set_title(&mut self, msg: &str) -> &mut ProgressBar {
         self.ctxt.title = msg.into();
         self
     }
 
-    /// Set progress bar width.
+    /// Set width of the progress bar.
     pub fn set_width(&mut self, width: usize) -> &mut ProgressBar {
         self.ctxt.width = width;
         self
     }
 
-    /// Set refresh rate.
+    /// Set refresh rate that drawing progress.
     pub fn set_refresh_rate(&mut self, rate: Duration) ->&mut ProgressBar {
         self.ctxt.refresh_rate = rate;
         self
     }
 
-    /// Set progress bar current value.
-    pub fn set(&mut self, value: u64) -> u64 {
+    /// Set current value of the progress bar.
+    pub fn set(&mut self, value: u64, is_force: bool) -> u64 {
         self.ctxt.current = value;
-        self.update(false);
+        self.update(is_force);
         self.ctxt.current
     }
 
-    /// Add progress bar current value.
+    /// Add current value of the progress bar .
     pub fn add(&mut self, value: u64) -> u64 {
         let value = self.ctxt.current + value;
-        self.set(value)
+        self.set(value, false)
     }
 
-    /// Increase progress bar current value.
+    /// Increase current value of the progress bar .
     pub fn increase(&mut self) -> u64 {
         self.add(1)
     }
@@ -178,40 +235,61 @@ impl ProgressBar {
     pub fn finish_with_msg(&mut self, msg: &str) {
         self.ctxt.current = self.ctxt.total;
         self.update(true);
+        let line = format!("\n{}", msg);
         self.ctxt.target
-            .write_target(format!("\n{}", msg).as_bytes())
-            .expect("write to target fail.");
+            .draw_or_send(ProgressBarDrawInfo {
+                line,
+                done: true,
+                force: true,
+            });
     }
 
     /// Finish progress and replace the progress bar with message 'msg'.
-    pub fn finish_with_clear(&mut self, msg: &str) {
+    pub fn finish_and_clear(&mut self, msg: &str) {
         self.ctxt.current = self.ctxt.total;
         self.update(true);
         let msg_len = msg.len();
-        let mut s = format!("\r{}{}", msg,
+        let line = format!("\r{}{}", msg,
                             repeat(" ").take(self.ctxt.width - msg_len)
                                 .collect::<String>());
         self.ctxt.target
-            .write_target(s.as_bytes())
-            .expect("write to target fail.");
+            .draw_or_send(ProgressBarDrawInfo {
+                line,
+                done: true,
+                force: true,
+            });
     }
 
     fn update(&mut self, is_force: bool) {
         if is_force || self.ctxt.should_draw() {
-            self.draw();
+            let line: String = format!(
+                "\r{} {} {} {} {}",
+                self.format_title(), self.format_speed(self.ctxt.speed()),
+                self.format_time(self.ctxt.time_left()),
+                self.format_percent(), self.format_bar(30)
+            );
+            self.ctxt.target
+                .draw_or_send(ProgressBarDrawInfo {
+                    line,
+                    done: false,
+                    force: false,
+                });
         }
     }
 
-    fn draw(&mut self) {
-        let s: String = format!("\r{} {} {} {} {}",
-            self.format_title(), self.format_speed(self.ctxt.speed()),
-            self.format_time(self.ctxt.time_left()),
-            self.format_percent(), self.format_bar(30)
-        );
-        self.ctxt.target
-            .write_target(s.as_bytes())
-            .expect("write to target fail.");
-    }
+//    fn draw(&mut self) {
+//        let s: String = format!("\r{} {} {} {} {}",
+//            self.format_title(), self.format_speed(self.ctxt.speed()),
+//            self.format_time(self.ctxt.time_left()),
+//            self.format_percent(), self.format_bar(30)
+//        );
+//        self.ctxt.target
+//            .draw_or_send(ProgressBarDrawInfo {
+//                line: s,
+//                done: false,
+//                force: false,
+//            });
+//    }
 }
 
 impl ProgressBar {

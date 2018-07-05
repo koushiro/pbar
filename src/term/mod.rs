@@ -3,25 +3,25 @@ use std::io::{self, Write};
 const TERM_DEFAULT_WIDTH: usize = 79;
 const TERM_DEFAULT_HEIGHT: usize = 5;
 
-enum TermTarget {
+enum TermTargetKind {
     Stdout,
     Stderr,
 }
 
 pub struct Term {
-    target: TermTarget,
+    kind: TermTargetKind,
 }
 
 impl Term {
     pub fn stdout() -> Term {
         Term {
-            target: TermTarget::Stdout,
+            kind: TermTargetKind::Stdout,
         }
     }
 
     pub fn stderr() -> Term {
         Term {
-            target: TermTarget::Stderr,
+            kind: TermTargetKind::Stderr,
         }
     }
 
@@ -43,12 +43,12 @@ impl Term {
     }
 
     pub fn write_target(&self, bytes: &[u8]) -> io::Result<()> {
-        match self.target {
-            TermTarget::Stdout => {
+        match self.kind {
+            TermTargetKind::Stdout => {
                 io::stdout().write_all(bytes)?;
                 io::stdout().flush()?;
             },
-            TermTarget::Stderr => {
+            TermTargetKind::Stderr => {
                 io::stderr().write_all(bytes)?;
                 io::stderr().flush()?;
             },

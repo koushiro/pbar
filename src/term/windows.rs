@@ -12,14 +12,14 @@ use winapi::um::{
     winnt::{HANDLE, CHAR},
 };
 
-use term::{Term, TermTarget};
+use term::{Term, TermTargetKind};
 
 impl AsRawHandle for Term {
     fn as_raw_handle(&self) -> RawHandle {
-        match self.target {
-            TermTarget::Stdout =>
+        match self.kind {
+            TermTargetKind::Stdout =>
                 unsafe { GetStdHandle(STD_OUTPUT_HANDLE) as RawHandle },
-            TermTarget::Stderr =>
+            TermTargetKind::Stderr =>
                 unsafe { GetStdHandle(STD_ERROR_HANDLE) as RawHandle },
         }
     }

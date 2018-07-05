@@ -7,7 +7,7 @@ license = "MIT"
 keywords = ["terminal", "progress", "bar", "cli"]
 
 [dependencies]
-
+chrono = "0.4"
 
 [target.'cfg(unix)'.dependencies]
 libc = "*"

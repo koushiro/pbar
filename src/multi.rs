@@ -1,78 +1,94 @@
 use std::io;
-use std::time::Duration;
-use std::thread;
-use std::sync::mpsc;
+use std::sync::{mpsc, Mutex};
 
 use bar::*;
 
-struct ChannelMsg {
-    done: bool,
-    level: usize,
-    string: String,
-}
-
-pub struct Pipe {
-    level: usize,
-    sender: mpsc::Sender<ChannelMsg>,
-}
-
-impl io::Write for Pipe {
-    fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
-        let s = String::from_utf8(buf.to_owned()).unwrap();
-        self.sender.send(ChannelMsg {
-            done: s.is_empty(),
-            level: self.level,
-            string: s,
-        }).unwrap();
-        Ok(1)
-    }
-
-    fn flush(&mut self) -> io::Result<()> {
-        Ok(())
-    }
+struct MultiProgressBarContext {
+    target: ProgressBarTarget,
+    bars: Vec<ProgressBarDrawInfo>,
 }
 
 pub struct MultiProgressBar {
-    nbars: usize,
-    nlines: usize,
-    lines: Vec<String>,
-    channel: (mpsc::Sender<ChannelMsg>, mpsc::Receiver<ChannelMsg>),
+    ctxt: MultiProgressBarContext,
+    tx: mpsc::Sender<(usize, ProgressBarDrawInfo)>,
+    rx: mpsc::Receiver<(usize, ProgressBarDrawInfo)>,
 }
 
 impl MultiProgressBar {
     pub fn stdout() -> MultiProgressBar {
+        let (tx, rx) = mpsc::channel();
         MultiProgressBar {
-            nbars: 0,
-            nlines: 0,
-            lines: vec![],
-            channel: mpsc::channel(),
+            ctxt: MultiProgressBarContext {
+                target: ProgressBarTarget::stdout(),
+                bars: vec![],
+            },
+            tx,
+            rx,
         }
     }
 
     pub fn stderr() -> MultiProgressBar {
+        let (tx, rx) = mpsc::channel();
         MultiProgressBar {
-            nbars: 0,
-            nlines: 0,
-            lines: vec![],
-            channel: mpsc::channel(),
+            ctxt: MultiProgressBarContext {
+                target: ProgressBarTarget::stderr(),
+                bars: vec![],
+            },
+            tx,
+            rx,
         }
     }
 
-    pub fn attach(&self, bar: ProgressBar) -> ProgressBar {
+    pub fn attach(&mut self, bar: ProgressBar) -> ProgressBar {
+        /// index from 0 to bars.len()-1
+        let index = self.ctxt.bars.len();
+        self.ctxt.bars.push(ProgressBarDrawInfo {
+            line: String::new(),
+            done: false,
+            force: false,
+        });
+        let mut bar = bar;
+        bar.set_target(ProgressBarTarget::remote(
+            index,
+            Mutex::new(self.tx.clone()))
+        );
         bar
     }
 
-    pub fn start(&self) {
-
+    pub fn join(&self) -> io::Result<()> {
+        self.listen(false)
     }
 
-    pub fn stop(&self) {
-
+    pub fn join_and_clear(&self) -> io::Result<()> {
+        self.listen(true)
     }
-}
 
-impl Drop for MultiProgressBar {
-    fn drop(&mut self) {
+    fn listen(&self, clear: bool) -> io::Result<()> {
+        while !self.is_done() {
+            let (index, info) = self.rx.recv().unwrap();
+            self.ctxt.target.draw_or_send(info);
+        }
 
+        if clear {
+            self.ctxt.target.draw_or_send(ProgressBarDrawInfo {
+               line: String::new(),
+                done: true,
+                force: true,
+            });
+        }
+
+        Ok(())
+    }
+
+    fn is_done(&self) -> bool {
+        if self.ctxt.bars.is_empty() {
+            return true;
+        }
+        for bar in &self.ctxt.bars {
+            if !bar.done {
+                return false;
+            }
+        }
+        true
     }
 }
