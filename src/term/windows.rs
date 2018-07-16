@@ -48,38 +48,43 @@ pub fn terminal_size(term: &Term) -> Option<(usize, usize)> {
 pub fn move_cursor_up(term: &Term, n: usize) -> io::Result<()> {
     match get_console_screen_buffer_info(term.as_raw_handle()) {
         Some((handle, csbi)) => {
-            set_console_cursor_pos(handle, 0, csbi.dwCursorPosition.Y - n as i16);
-            Ok(())
+            let set_result = set_console_cursor_pos(
+                handle,
+                0, csbi.dwCursorPosition.Y - n as i16
+            );
+            match set_result {
+                true => Ok(()),
+                false => Err(io::Error::new(
+                    io::ErrorKind::Other,
+                    "SetConsoleCursorPosition invalid.")
+                ),
+            }
         },
-        None => {},
+        None => Err(io::Error::new(
+            io::ErrorKind::Other,
+            "GetConsoleScreenBufferInfo invalid.")
+        ),
     }
 }
 
 pub fn move_cursor_down(term: &Term, n: usize) -> io::Result<()> {
     match get_console_screen_buffer_info(term.as_raw_handle()) {
         Some((handle, csbi)) => {
-            set_console_cursor_pos(handle, 0, csbi.dwCursorPosition.Y + n as i16);
-            Ok(())
+            let set_result = set_console_cursor_pos(
+                handle,
+                0, csbi.dwCursorPosition.Y + n as i16
+            );
+            match set_result {
+                true => Ok(()),
+                false => Err((io::Error::new(
+                    io::ErrorKind::Other,
+                    "SetConsoleCursorPosition invalid."))),
+            }
         },
-        None => {},
+        None => Err(io::Error::new(
+            io::ErrorKind::Other,
+            "GetConsoleScreenBufferInfo invalid.")),
     }
-}
-
-pub fn clear_line(term: &Term) -> io::Result<()> {
-    if let Some((handle, csbi)) = get_console_screen_buffer_info(term.as_raw_handle()){
-        unsafe {
-            let length = csbi.srWindow.Right - csbi.srWindow.Left;
-            let coord = COORD {
-                X: 0,
-                Y: csbi.dwCursorPosition.Y,
-            };
-            let mut written = 0;
-            FillConsoleOutputCharacterA(handle as HANDLE, b' ' as CHAR,
-                                        length as DWORD, coord, &mut written);
-            SetConsoleCursorPosition(handle as HANDLE, coord);
-        }
-    }
-    Ok(())
 }
 
 fn get_console_mode(handle: RawHandle) -> Option<u32> {

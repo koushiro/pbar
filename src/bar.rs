@@ -85,24 +85,6 @@ impl ProgressBarTarget {
             _ => {},
         }
     }
-
-    pub fn clear_line(&self) {
-        match self.kind {
-            ProgressBarTargetKind::Term(ref term) => {
-                term.clear_line();
-            },
-            _ => {},
-        }
-    }
-
-    pub fn clear_last_lines(&self, n: usize) {
-        match self.kind {
-            ProgressBarTargetKind::Term(ref term) => {
-                term.clear_last_lines(n);
-            },
-            _ => {},
-        }
-    }
 }
 
 struct ProgressBarContext {

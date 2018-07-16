@@ -35,10 +35,6 @@ pub fn move_cursor_down(term: &Term, n: usize) -> io::Result<()> {
     term.write_target(format!("\x1b[{}B", n).as_bytes())
 }
 
-pub fn clear_line(term: &Term) -> io::Result<()> {
-    term.write_target(format!("\r\x1b[2K").as_bytes())
-}
-
 fn is_a_tty(fd: RawFd) -> bool {
     unsafe {
         if libc::isatty(fd) == 1 { true } else { false }

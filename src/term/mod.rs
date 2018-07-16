@@ -52,20 +52,6 @@ impl Term {
         move_cursor_down(self, n)
     }
 
-    pub fn clear_line(&self) -> io::Result<()> {
-        clear_line(self)
-    }
-
-    pub fn clear_last_lines(&self, n: usize) -> io::Result<()> {
-        self.move_cursor_up(n)?;
-        for _ in 0..n {
-            self.clear_line();
-            self.move_cursor_down(1)?;
-        }
-        self.move_cursor_up(n)?;
-        Ok(())
-    }
-
     pub fn write_target(&self, bytes: &[u8]) -> io::Result<()> {
         match self.kind {
             TermTargetKind::Stdout => {
