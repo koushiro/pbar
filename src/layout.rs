@@ -1,17 +1,12 @@
-pub enum LayoutElement {
-    Prefix,
+pub enum LayoutElem {
+    Title,
     Current,
     Total,
     Percent,
     Bar,
     TimeLeft,
     TimeElapsed,
+    TimeTotal,
     Speed,
-    Message,
-}
-
-pub enum LayoutAlignment {
-    Left,
-    Center,
-    Right,
+    Other(String),
 }

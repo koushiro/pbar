@@ -6,7 +6,7 @@ use std::time::Duration;
 use pbar::ProgressBar;
 
 fn main() {
-    let count = 1000;
+    let count = 10000;
     let mut pbar = ProgressBar::new(count);
     pbar.set_title("Simple:");
     for _ in 0..count {

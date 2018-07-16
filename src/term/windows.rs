@@ -1,5 +1,7 @@
+use std::io;
 use std::os::windows::io::{AsRawHandle, RawHandle};
 
+use winapi::shared::minwindef::DWORD;
 use winapi::um::{
     consoleapi::GetConsoleMode,
     processenv::GetStdHandle,
@@ -7,6 +9,7 @@ use winapi::um::{
     wincon::{
         COORD, SMALL_RECT, CONSOLE_SCREEN_BUFFER_INFO,
         GetConsoleScreenBufferInfo,
+        FillConsoleOutputCharacterA,
         SetConsoleCursorPosition,
     },
     winnt::{HANDLE, CHAR},
@@ -26,14 +29,14 @@ impl AsRawHandle for Term {
 }
 
 pub fn is_term(term: &Term) -> bool {
-    match get_console_mode(term.as_raw_handle() as HANDLE) {
+    match get_console_mode(term.as_raw_handle()) {
         Some(_) => true,
         None => false,
     }
 }
 
 pub fn terminal_size(term: &Term) -> Option<(usize, usize)> {
-    match get_console_screen_buffer_info(term.as_raw_handle() as HANDLE) {
+    match get_console_screen_buffer_info(term.as_raw_handle()) {
         Some((_, csbi)) => Some((
             (csbi.srWindow.Right - csbi.srWindow.Left) as usize,
             (csbi.srWindow.Bottom - csbi.srWindow.Top) as usize
@@ -42,52 +45,59 @@ pub fn terminal_size(term: &Term) -> Option<(usize, usize)> {
     }
 }
 
-pub fn move_cursor_up(term: &Term, n: usize) -> Result<(), String> {
-    match get_console_screen_buffer_info(term.as_raw_handle() as HANDLE) {
+pub fn move_cursor_up(term: &Term, n: usize) -> io::Result<()> {
+    match get_console_screen_buffer_info(term.as_raw_handle()) {
         Some((handle, csbi)) => {
-            let set_result = set_console_cursor_pos(
-                handle, 0, csbi.dwCursorPosition.Y - n as i16
-            );
-            match set_result {
-                true => Ok(()),
-                false => Err(String::from("SetConsoleCursorPosition invalid.")),
-            }
+            set_console_cursor_pos(handle, 0, csbi.dwCursorPosition.Y - n as i16);
+            Ok(())
         },
-        None => Err(String::from("GetConsoleScreenBufferInfo invalid.")),
+        None => {},
     }
 }
 
-pub fn move_cursor_down(term: &Term, n: usize) -> Result<(), String> {
-    match get_console_screen_buffer_info(term.as_raw_handle() as HANDLE) {
+pub fn move_cursor_down(term: &Term, n: usize) -> io::Result<()> {
+    match get_console_screen_buffer_info(term.as_raw_handle()) {
         Some((handle, csbi)) => {
-            let set_result = set_console_cursor_pos(
-                handle, 0, csbi.dwCursorPosition.Y + n as i16
-            );
-            match set_result {
-                true => Ok(()),
-                false => Err(String::from("SetConsoleCursorPosition invalid.")),
-            }
+            set_console_cursor_pos(handle, 0, csbi.dwCursorPosition.Y + n as i16);
+            Ok(())
         },
-        None => Err(String::from("GetConsoleScreenBufferInfo invalid.")),
+        None => {},
     }
 }
 
-fn get_console_mode(handle: HANDLE) -> Option<u32> {
+pub fn clear_line(term: &Term) -> io::Result<()> {
+    if let Some((handle, csbi)) = get_console_screen_buffer_info(term.as_raw_handle()){
+        unsafe {
+            let length = csbi.srWindow.Right - csbi.srWindow.Left;
+            let coord = COORD {
+                X: 0,
+                Y: csbi.dwCursorPosition.Y,
+            };
+            let mut written = 0;
+            FillConsoleOutputCharacterA(handle as HANDLE, b' ' as CHAR,
+                                        length as DWORD, coord, &mut written);
+            SetConsoleCursorPosition(handle as HANDLE, coord);
+        }
+    }
+    Ok(())
+}
+
+fn get_console_mode(handle: RawHandle) -> Option<u32> {
     unsafe {
         let mut mode = 0;
-        match GetConsoleMode(handle, &mut mode) {
+        match GetConsoleMode(handle as HANDLE, &mut mode) {
             0 => None,
             _ => Some(mode),
         }
     }
 }
 
-fn get_console_screen_buffer_info(handle: HANDLE)
-    -> Option<(HANDLE, CONSOLE_SCREEN_BUFFER_INFO)>
+fn get_console_screen_buffer_info(handle: RawHandle)
+    -> Option<(RawHandle, CONSOLE_SCREEN_BUFFER_INFO)>
 {
     let coord = COORD {
         X: 0,
-        Y: 0
+        Y: 0,
     };
 
     let small_rect = SMALL_RECT {
@@ -105,18 +115,18 @@ fn get_console_screen_buffer_info(handle: HANDLE)
         dwMaximumWindowSize: coord,
     };
 
-    match unsafe { GetConsoleScreenBufferInfo(handle, &mut csbi) } {
+    match unsafe { GetConsoleScreenBufferInfo(handle as HANDLE, &mut csbi) } {
         0 => None,
         _ => Some((handle, csbi)),
     }
 }
 
-fn set_console_cursor_pos(handle: HANDLE, x: i16, y: i16) -> bool {
+fn set_console_cursor_pos(handle: RawHandle, x: i16, y: i16) -> bool {
     let coord = COORD {
         X: x,
         Y: y,
     };
-    match unsafe { SetConsoleCursorPosition(handle, coord) } {
+    match unsafe { SetConsoleCursorPosition(handle as HANDLE, coord) } {
         0 => false,
         _ => true,
     }

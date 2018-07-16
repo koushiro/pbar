@@ -5,12 +5,14 @@ authors = ["koushiro <https://github.com/koushiro>"]
 description = "A terminal progress bar."
 license = "MIT"
 keywords = ["terminal", "progress", "bar", "cli"]
+readme = "README.md"
+homepage = "https://github.com/koushiro/pbar"
+documentation = "http://doc.rust-lang.org/pbar"
+repository = "https://github.com/koushiro/pbar"
 
 [dependencies]
+libc = "0.2"
 chrono = "0.4"
-
-[target.'cfg(unix)'.dependencies]
-libc = "*"
 
 [target.'cfg(windows)'.dependencies]
 winapi = { version = "0.3", features = ["consoleapi", "processenv","winbase",  "wincon", "winnt"] }
