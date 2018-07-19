@@ -6,9 +6,10 @@ mod term;
 
 mod bar;
 mod multi;
-mod layout;
+mod style;
 mod util;
 mod format;
 
-pub use bar::{ProgressBar, ProgressBarStyle};
+pub use bar::ProgressBar;
 pub use multi::MultiProgressBar;
+pub use style::ProgressBarStyle;

@@ -3,13 +3,14 @@ extern crate pbar;
 use std::thread;
 use std::time::Duration;
 
-use pbar::{ProgressBarStyle, MultiProgressBar};
+use pbar::{MultiProgressBar, ProgressBarStyle};
 
 fn main() {
     let mut multibars = MultiProgressBar::stdout();
-    let style = ProgressBarStyle::default().set_bar_symbols(" ██░ ");
+    let mut style = ProgressBarStyle::default();
+    style.set_bar_symbols(" ██░ ");
 
-    let count: u64 = 10000;
+    let count: u64 = 1000;
     let mut bar = multibars.attach(count);
     bar.set_style(style.clone());
     let _ = thread::spawn(move || {
@@ -18,7 +19,7 @@ fn main() {
             bar.increase();
             thread::sleep(Duration::from_millis(10));
         }
-        bar.finish();
+        bar.finish_and_clear("item #1: done");
     });
 
     let mut bar = multibars.attach(count);
@@ -29,7 +30,7 @@ fn main() {
             bar.increase();
             thread::sleep(Duration::from_millis(20));
         }
-        bar.finish();
+        bar.finish_and_clear("item #2: done");
     });
 
     let mut bar = multibars.attach(count);
@@ -38,10 +39,10 @@ fn main() {
         bar.set_title("item #3:");
         for _ in 0..count {
             bar.increase();
-            thread::sleep(Duration::from_millis(50));
+            thread::sleep(Duration::from_millis(30));
         }
-        bar.finish();
+        bar.finish_and_clear("item #3: done");
     });
 
-    multibars.join().unwrap();
+    multibars.join_with_msg("All done...").unwrap();
 }

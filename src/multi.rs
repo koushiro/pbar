@@ -6,7 +6,8 @@ use bar::*;
 
 pub struct MultiProgressBar {
     target: ProgressBarTarget,
-    bars: Vec<ProgressBarDrawInfo>,
+    bars: Vec<String>,
+    nbars: usize,
     tx: mpsc::Sender<(usize, ProgressBarDrawInfo)>,
     rx: mpsc::Receiver<(usize, ProgressBarDrawInfo)>,
 }
@@ -17,6 +18,7 @@ impl MultiProgressBar {
         MultiProgressBar {
             target: ProgressBarTarget::stdout(),
             bars: vec![],
+            nbars: 0,
             tx,
             rx,
         }
@@ -27,6 +29,7 @@ impl MultiProgressBar {
         MultiProgressBar {
             target: ProgressBarTarget::stderr(),
             bars: vec![],
+            nbars: 0,
             tx,
             rx,
         }
@@ -35,11 +38,8 @@ impl MultiProgressBar {
     pub fn attach(&mut self, total: u64) -> ProgressBar {
         /// index from 0 to bars.len()-1
         let index = self.bars.len();
-        self.bars.push(ProgressBarDrawInfo {
-            line: String::new(),
-            done: false,
-            force: false,
-        });
+        self.bars.push(String::new());
+        self.nbars += 1;
         let mut bar = ProgressBar::new(total);
         // set the index of attached bar and channel sender.
         bar.set_target(ProgressBarTarget::channel(index, self.tx.clone()));
@@ -47,25 +47,20 @@ impl MultiProgressBar {
     }
 
     pub fn join(&mut self) -> io::Result<()> {
-        self.listen(false)
+        self.listen()
     }
 
-    pub fn join_and_clear(&mut self) -> io::Result<()> {
-        self.listen(true)
+    pub fn join_with_msg(&mut self, msg: &str) -> io::Result<()> {
+        self.listen();
+        self.target.draw(msg.to_string())
     }
 
-    fn listen(&mut self, clear: bool) -> io::Result<()> {
+    fn listen(&mut self) -> io::Result<()> {
         let mut first = true;
 
-        while !self.is_done() {
+        while self.nbars > 0 {
             let (index, info) = self.rx.recv().unwrap();
-            self.bars[index] = info;
-
-            let mut out = ProgressBarDrawInfo {
-                line: String::new(),
-                done: false,
-                force: false,
-            };
+            self.bars[index] = info.line;
 
             if !first {
                 self.target.move_cursor_up(self.bars.len());
@@ -73,33 +68,18 @@ impl MultiProgressBar {
                 first = false;
             }
 
+            let mut out = String::new();
             for bar in self.bars.iter() {
-                out.line.push_str(&format!("\r{}\n", bar.line));
+                out.push_str(&format!("\r{}\n", bar));
             }
 
-            self.target.draw_or_send(out);
-        }
+            self.target.draw(out);
 
-        if clear {
-            self.target.draw_or_send(ProgressBarDrawInfo {
-                line: String::new(),
-                done: true,
-                force: true,
-            });
+            if info.done {
+                self.nbars -= 1;
+            }
         }
 
         Ok(())
-    }
-
-    fn is_done(&self) -> bool {
-        if self.bars.is_empty() {
-            return true;
-        }
-        for bar in &self.bars {
-            if !bar.done {
-                return false;
-            }
-        }
-        true
     }
 }
