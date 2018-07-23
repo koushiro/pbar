@@ -168,8 +168,7 @@ impl ProgressBar {
                 width,
                 current: 0,
                 total,
-                title: "".into(),
-
+                title: String::new(),
                 start_time: Instant::now(),
                 last_refresh_time: Instant::now(),
                 refresh_rate: Duration::from_millis(500),
@@ -184,25 +183,25 @@ impl ProgressBar {
     }
 
     /// Set customize style for the progress bar.
-    pub fn set_style(&mut self, style: ProgressBarStyle) -> &mut ProgressBar {
+    pub fn set_style(&mut self, style: ProgressBarStyle) -> &mut Self {
         self.style = style;
         self
     }
 
     /// Set title of the progress bar.
-    pub fn set_title(&mut self, msg: &str) -> &mut ProgressBar {
-        self.ctxt.title = msg.into();
+    pub fn set_title(&mut self, s: &str) -> &mut Self {
+        self.ctxt.title = s.to_string();
         self
     }
 
     /// Set width of the progress bar.
-    pub fn set_width(&mut self, width: usize) -> &mut ProgressBar {
+    pub fn set_width(&mut self, width: usize) -> &mut Self {
         self.ctxt.width = width;
         self
     }
 
     /// Set refresh rate that drawing progress.
-    pub fn set_refresh_rate(&mut self, rate: Duration) ->&mut ProgressBar {
+    pub fn set_refresh_rate(&mut self, rate: Duration) ->&mut Self {
         self.ctxt.refresh_rate = rate;
         self
     }
@@ -265,12 +264,7 @@ impl ProgressBar {
 
             self.ctxt.last_refresh_time = now;
 
-            let line: String = format!(
-                "\r{:<} {:>10} {:>10} {:>} {:>}",
-                self.fmt_title(), self.fmt_speed(self.ctxt.speed()),
-                self.fmt_time(self.ctxt.time_left()),
-                self.fmt_percent(), self.fmt_bar(30)
-            );
+            let line = self.dispatch();
             self.target.handle_draw_info(ProgressBarDrawInfo {
                 line,
                 done: false,
@@ -280,21 +274,63 @@ impl ProgressBar {
 }
 
 impl ProgressBar {
-    fn fmt_title(&self) -> String {
-        format!("{}", self.ctxt.title)
+    fn dispatch(&mut self) -> String {
+        let mut out = String::with_capacity(self.ctxt.width);
+        out += &self.fmt_title(15);
+
+        for component in &self.style.layout {
+            let s = match component {
+                Component::Counter(delimiter, fmt) => {
+                    self.fmt_counter(delimiter, fmt)
+                },
+                Component::Percent => {
+                    self.fmt_percent()
+                },
+                Component::Bar(symbols, width) => {
+                    self.fmt_bar(symbols, *width)
+                },
+                Component::TimeLeft(fmt) => {
+                    self.fmt_time(self.ctxt.time_left(), fmt)
+                },
+                Component::TimeElapsed(fmt) => {
+                    self.fmt_time(self.ctxt.time_elapsed(), fmt)
+                },
+                Component::TimeTotal(fmt) => {
+                    self.fmt_time(self.ctxt.time_total(), fmt)
+                },
+                Component::Speed(fmt) => {
+                    self.fmt_speed(self.ctxt.speed(), fmt)
+                },
+                Component::Delimiter(s) => {
+                    s.to_string()
+                },
+            };
+            out += &s;
+            out += " ";
+        }
+        out
     }
 
-    fn fmt_bar(&self, bar_width: usize) -> String {
+    fn fmt_title(&self, length: usize) -> String {
+        format!("\r{:<width$} ", self.ctxt.title, width = length)
+    }
+
+    fn fmt_counter(&self, delimiter: &str, fmt: &UnitFormat) -> String {
+        format!("{:>10} {} {:<10}",
+                self.ctxt.current, delimiter, self.ctxt.total)
+    }
+
+    fn fmt_bar(&self, symbols: &Vec<char>, bar_width: usize) -> String {
         let percent = self.ctxt.percent();
-        let begin_part = self.style.bar_symbols[0].to_string();
+        let begin_part = symbols[0].to_string();
         let fill_len = (percent * bar_width as f64) as usize;
-        let fill_part = repeat(self.style.bar_symbols[1])
+        let fill_part = repeat(symbols[1])
             .take(fill_len).collect::<String>();
-        let cur_part = self.style.bar_symbols[2].to_string();
+        let cur_part = symbols[2].to_string();
         let empty_len = bar_width.saturating_sub(fill_len).saturating_sub(1);
-        let empty_part = repeat(self.style.bar_symbols[3])
+        let empty_part = repeat(symbols[3])
             .take(empty_len).collect::<String>();
-        let end_part = self.style.bar_symbols[4].to_string();
+        let end_part = symbols[4].to_string();
 
         if !self.ctxt.is_finish() {
             format!("{}{}{}{}{}", begin_part, fill_part, cur_part,
@@ -305,16 +341,16 @@ impl ProgressBar {
     }
 
     fn fmt_percent(&self) -> String {
-        format!("{:>4}%", (self.ctxt.percent() * 100f64) as u64)
+        format!("{:>3}%", (self.ctxt.percent() * 100f64) as u64)
     }
 
-    fn fmt_time(&self, time: Duration) -> String {
+    fn fmt_time(&self, time: Duration, fmt: &TimeFormat) -> String {
         let format_time = FormattedDuration::Readable(time);
-        format!("{}", format_time)
+        format!("{:<10}", format_time)
     }
 
-    fn fmt_speed(&self, speed: f64) -> String {
+    fn fmt_speed(&self, speed: f64, fmt: &UnitFormat) -> String {
         let format_speed = FormattedUnit::Default(speed);
-        format!("{}iter/s", format_speed)
+        format!("{:>10}/s", format_speed)
     }
 }

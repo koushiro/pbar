@@ -3,15 +3,44 @@ use std::time::Duration;
 
 use util::*;
 
-const KiB: f64 = 1024.;
-const MiB: f64 = 1_048_576.;
-const GiB: f64 = 1_073_741_824.;
-const TiB: f64 = 1_099_511_627_776.;
+const KIB: f64 = 1024.;
+const MIB: f64 = 1_048_576.;
+const GIB: f64 = 1_073_741_824.;
+const TIB: f64 = 1_099_511_627_776.;
 
 const KB: f64 = 1e3;
 const MB: f64 = 1e6;
 const GB: f64 = 1e9;
 const TB: f64 = 1e12;
+
+#[derive(Clone)]
+pub enum UnitFormat {
+    /// format pure number.
+    /// example: 123456
+    Default,
+    /// format <1000 XXX; >=1000 X.XeY,
+    /// example: 567 (567 < 1000); 5.7e3 (5678 >= 1000) ...
+    Scientific,
+    /// format XXX B; XXX.X KiB/MiB/GiB/TiB,
+    /// example: 567B; 5678B / 1024 = 5.5KiB ...
+    Bytes,
+    /// format XXX B; XXX.X KB/MB/GB/TB,
+    /// example: 567B; 5678B / 1000 = 5.7KB ...
+    BytesDec,
+}
+
+#[derive(Clone)]
+pub enum TimeFormat {
+    /// format HH:MM::SS,
+    /// example: 00:00:01; 111:05:10 ...
+    TimeFmt1,
+    /// format MM::SS,
+    /// example: 00:01; 65:10 ...
+    TimeFmt2,
+    /// format X...XdHHhMMmSSs,
+    /// example: 1234d1h0m10s; 10h10m10s; 1h5m10s ...
+    TimeFmt3,
+}
 
 pub enum FormattedDuration {
     Basic(Duration),
@@ -64,10 +93,10 @@ impl fmt::Display for FormattedUnit {
 
             FormattedUnit::Bytes(unit) => {
                 match unit {
-                    unit if unit >= TiB => write!(f, "{:.*}TiB", 1, unit / TiB),
-                    unit if unit >= GiB => write!(f, "{:.*}GiB", 1, unit / GiB),
-                    unit if unit >= MiB => write!(f, "{:.*}MiB", 1, unit / MiB),
-                    unit if unit >= KiB => write!(f, "{:.*}KiB", 1, unit / KiB),
+                    unit if unit >= TIB => write!(f, "{:.*}TiB", 1, unit / TIB),
+                    unit if unit >= GIB => write!(f, "{:.*}GiB", 1, unit / GIB),
+                    unit if unit >= MIB => write!(f, "{:.*}MiB", 1, unit / MIB),
+                    unit if unit >= KIB => write!(f, "{:.*}KiB", 1, unit / KIB),
                     _ => write!(f, "{:.*}B", 0, unit),
                 }
             },
@@ -119,13 +148,13 @@ fn test_unit_format() {
     default = FormattedUnit::Default(999f64);
     assert_eq!(String::from("999"), format!("{}", default));
 
-    let mut bytes = FormattedUnit::Bytes(TiB+256f64*GiB);
+    let mut bytes = FormattedUnit::Bytes(TIB+256f64*GIB);
     assert_eq!(String::from("1.2TiB"), format!("{}", bytes));
-    bytes = FormattedUnit::Bytes(2048f64*MiB);
+    bytes = FormattedUnit::Bytes(2048f64*MIB);
     assert_eq!(String::from("2.0GiB"), format!("{}", bytes));
-    bytes = FormattedUnit::Bytes(2f64*MiB+256f64*KB);
+    bytes = FormattedUnit::Bytes(2f64*MIB+256f64*KB);
     assert_eq!(String::from("2.2MiB"), format!("{}", bytes));
-    bytes = FormattedUnit::Bytes(2f64*KiB+512f64);
+    bytes = FormattedUnit::Bytes(2f64*KIB+512f64);
     assert_eq!(String::from("2.5KiB"), format!("{}", bytes));
     bytes = FormattedUnit::Bytes(999f64);
     assert_eq!(String::from("999B"), format!("{}", bytes));

@@ -1,99 +1,113 @@
+use format::*;
+
 #[derive(Clone)]
-pub enum LayoutElem {
-    Title,
-    Current,
-    Total,
+pub enum Component {
+    Counter(String, UnitFormat),    // Current Separator Total
+    Speed(UnitFormat),
     Percent,
-    Bar,
-    TimeLeft,
-    TimeElapsed,
-    TimeTotal,
-    Speed,
-    Separator(String),
+    Bar(Vec<char>, usize),
+    TimeLeft(TimeFormat),
+    TimeElapsed(TimeFormat),
+    TimeTotal(TimeFormat),
+    Delimiter(String),
 }
-
-pub enum ElemColor {
-
-}
-
 
 #[derive(Clone)]
 pub struct ProgressBarStyle {
-    pub bar_symbols: Vec<char>,
-    layout: Vec<LayoutElem>,
+    pub layout: Vec<Component>,
 }
 
 impl ProgressBarStyle {
     /// Return the default progress bar style.
     pub fn default() -> ProgressBarStyle {
         ProgressBarStyle {
-            bar_symbols: "[#>-]".chars().collect(),
             layout: vec![
-                LayoutElem::Title,
-                LayoutElem::Speed,
-                LayoutElem::TimeLeft,
-                LayoutElem::Percent,
-                LayoutElem::Bar,
+                Component::TimeLeft(TimeFormat::TimeFmt3),
+                Component::Counter("/".to_string(), UnitFormat::Default),
+                Component::Percent,
+                Component::Bar("[#>-]".chars().collect(), 30),
             ],
         }
     }
 
     /// Return the progress bar style without any content.
-    fn customizable() -> ProgressBarStyle {
+    pub fn customizable() -> ProgressBarStyle {
         ProgressBarStyle {
-            bar_symbols: vec![],
             layout: vec![],
         }
     }
 
-    /// Set the bar symbols `(begin, fill, current, empty, end)`.
-    pub fn set_bar_symbols(&mut self, s: &str) -> &ProgressBarStyle {
-        self.bar_symbols = s.chars().collect();
+    pub fn counter(&mut self, delimiter: Option<String>, fmt: Option<UnitFormat>)
+        -> &mut Self
+    {
+        self.layout.push(
+            Component::Counter(
+                delimiter.unwrap_or("/".to_string()),
+                fmt.unwrap_or(UnitFormat::Default),
+            )
+        );
         self
     }
 
-    fn title(&mut self, s: &str) -> &ProgressBarStyle {
-        self.layout.push(LayoutElem::Title);
+    pub fn percent(&mut self) -> &mut Self {
+        self.layout.push(
+            Component::Percent
+        );
         self
     }
 
-    fn current(&mut self, value: u64) -> &ProgressBarStyle {
-        self.layout.push(LayoutElem::Current);
+    pub fn bar(&mut self, s: &str,  width: Option<usize>) -> &mut Self {
+        self.layout.push(
+            Component::Bar(
+                s.chars().collect(),
+                width.unwrap_or(30),
+            )
+        );
         self
     }
 
-    fn total(&mut self, value: u64) -> &ProgressBarStyle {
-        self.layout.push(LayoutElem::Total);
+    pub fn time_left(&mut self, fmt: Option<TimeFormat>) -> &mut Self {
+        self.layout.push(
+            Component::TimeLeft(
+                fmt.unwrap_or(TimeFormat::TimeFmt3),
+            )
+        );
         self
     }
 
-    fn percent(&mut self) -> &ProgressBarStyle {
-        self.layout.push(LayoutElem::Percent);
+    pub fn time_elapsed(&mut self, fmt: Option<TimeFormat>) -> &mut Self {
+        self.layout.push(
+            Component::TimeElapsed(
+                fmt.unwrap_or(TimeFormat::TimeFmt3),
+            )
+        );
         self
     }
 
-    fn bar(&mut self) -> &ProgressBarStyle {
-        self.layout.push(LayoutElem::Bar);
+    pub fn time_total(&mut self, fmt: Option<TimeFormat>) -> &mut Self {
+        self.layout.push(
+            Component::TimeTotal(
+                fmt.unwrap_or(TimeFormat::TimeFmt3),
+            )
+        );
         self
     }
 
-    fn time_left(&mut self) -> &ProgressBarStyle {
-        self.layout.push(LayoutElem::TimeLeft);
+    pub fn speed(&mut self, fmt: Option<TimeFormat>) -> &mut Self {
+        self.layout.push(
+            Component::TimeTotal(
+                fmt.unwrap_or(TimeFormat::TimeFmt3),
+            )
+        );
         self
     }
 
-    fn time_elapsed(&mut self) -> &ProgressBarStyle {
-        self.layout.push(LayoutElem::TimeElapsed);
-        self
-    }
-
-    fn time_total(&mut self) -> &ProgressBarStyle {
-        self.layout.push(LayoutElem::TimeTotal);
-        self
-    }
-
-    fn separate(&mut self, s: &str) ->&ProgressBarStyle {
-        self.layout.push(LayoutElem::Separator(s.to_string()));
+    pub fn delimiter(&mut self, s: &str) -> &mut Self {
+        self.layout.push(
+            Component::Delimiter(
+                s.to_string(),
+            )
+        );
         self
     }
 }

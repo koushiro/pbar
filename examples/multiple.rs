@@ -8,7 +8,6 @@ use pbar::{MultiProgressBar, ProgressBarStyle};
 fn main() {
     let mut multibars = MultiProgressBar::stdout();
     let mut style = ProgressBarStyle::default();
-    style.set_bar_symbols(" ██░ ");
 
     let count: u64 = 1000;
     let mut bar = multibars.attach(count);
