@@ -7,7 +7,7 @@ use pbar::{MultiProgressBar, ProgressBarStyle};
 
 fn main() {
     let mut multibars = MultiProgressBar::stdout();
-    let mut style = ProgressBarStyle::default();
+    let style = ProgressBarStyle::default();
 
     let count: u64 = 1000;
     let mut bar = multibars.attach(count);

@@ -1,7 +1,6 @@
 use std::io;
 use std::os::windows::io::{AsRawHandle, RawHandle};
 
-use winapi::shared::minwindef::DWORD;
 use winapi::um::{
     consoleapi::GetConsoleMode,
     processenv::GetStdHandle,
@@ -9,10 +8,9 @@ use winapi::um::{
     wincon::{
         COORD, SMALL_RECT, CONSOLE_SCREEN_BUFFER_INFO,
         GetConsoleScreenBufferInfo,
-        FillConsoleOutputCharacterA,
         SetConsoleCursorPosition,
     },
-    winnt::{HANDLE, CHAR},
+    winnt::HANDLE,
 };
 
 use term::{Term, TermTargetKind};
@@ -76,9 +74,9 @@ pub fn move_cursor_down(term: &Term, n: usize) -> io::Result<()> {
             );
             match set_result {
                 true => Ok(()),
-                false => Err((io::Error::new(
+                false => Err(io::Error::new(
                     io::ErrorKind::Other,
-                    "SetConsoleCursorPosition invalid."))),
+                    "SetConsoleCursorPosition invalid.")),
             }
         },
         None => Err(io::Error::new(

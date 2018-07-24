@@ -1,4 +1,4 @@
-use std::io::{self, Write};
+use std::io;
 use std::time::{Duration, Instant};
 use std::iter::repeat;
 use std::sync::mpsc;
@@ -276,7 +276,7 @@ impl ProgressBar {
 impl ProgressBar {
     fn dispatch(&mut self) -> String {
         let mut out = String::with_capacity(self.ctxt.width);
-        out += &self.fmt_title(15);
+        out += &self.fmt_title();
 
         for component in &self.style.layout {
             let s = match component {
@@ -311,13 +311,33 @@ impl ProgressBar {
         out
     }
 
-    fn fmt_title(&self, length: usize) -> String {
-        format!("\r{:<width$} ", self.ctxt.title, width = length)
+    fn fmt_title(&self) -> String {
+        let title = &self.ctxt.title;
+        format!("\r{:<width$} ", title, width = title.len() + 3)
     }
 
     fn fmt_counter(&self, delimiter: &str, fmt: &UnitFormat) -> String {
-        format!("{:>10} {} {:<10}",
-                self.ctxt.current, delimiter, self.ctxt.total)
+        let (current, total) = self.ctxt.current();
+        match fmt {
+            UnitFormat::Default => {
+                format!("{:>} {} {:<}",
+                        FormattedUnit::Default(current as f64), delimiter,
+                        FormattedUnit::Default(total as f64)
+                )
+            },
+            UnitFormat::Bytes => {
+                format!("{:>} {} {:<}",
+                        FormattedUnit::Bytes(current as f64), delimiter,
+                        FormattedUnit::Bytes(total as f64)
+                )
+            },
+            UnitFormat::BytesDec => {
+                format!("{:>} {} {:<}",
+                        FormattedUnit::BytesDec(current as f64), delimiter,
+                        FormattedUnit::BytesDec(total as f64)
+                )
+            },
+        }
     }
 
     fn fmt_bar(&self, symbols: &Vec<char>, bar_width: usize) -> String {
@@ -345,12 +365,27 @@ impl ProgressBar {
     }
 
     fn fmt_time(&self, time: Duration, fmt: &TimeFormat) -> String {
-        let format_time = FormattedDuration::Readable(time);
-        format!("{:<10}", format_time)
+        match fmt {
+            TimeFormat::Fmt1 => {
+                format!("{:<10}", FormattedTime::Fmt1(time))
+            }
+            TimeFormat::Fmt2 => {
+                format!("{:<10}", FormattedTime::Fmt2(time))
+            },
+        }
     }
 
     fn fmt_speed(&self, speed: f64, fmt: &UnitFormat) -> String {
-        let format_speed = FormattedUnit::Default(speed);
-        format!("{:>10}/s", format_speed)
+        match fmt {
+            UnitFormat::Default => {
+                format!("{:>8}it/s", FormattedUnit::Default(speed))
+            },
+            UnitFormat::Bytes => {
+                format!("{:>8}/s", FormattedUnit::Default(speed))
+            },
+            UnitFormat::BytesDec => {
+                format!("{:>8}/s", FormattedUnit::Default(speed))
+            },
+        }
     }
 }

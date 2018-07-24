@@ -22,10 +22,10 @@ impl ProgressBarStyle {
     pub fn default() -> ProgressBarStyle {
         ProgressBarStyle {
             layout: vec![
-                Component::TimeLeft(TimeFormat::TimeFmt3),
                 Component::Counter("/".to_string(), UnitFormat::Default),
                 Component::Percent,
                 Component::Bar("[#>-]".chars().collect(), 30),
+                Component::TimeLeft(TimeFormat::Fmt1),
             ],
         }
     }
@@ -37,8 +37,8 @@ impl ProgressBarStyle {
         }
     }
 
-    pub fn counter(&mut self, delimiter: Option<String>, fmt: Option<UnitFormat>)
-        -> &mut Self
+    pub fn counter(&mut self, delimiter: Option<String>,
+                   fmt: Option<UnitFormat>) -> &mut Self
     {
         self.layout.push(
             Component::Counter(
@@ -69,7 +69,7 @@ impl ProgressBarStyle {
     pub fn time_left(&mut self, fmt: Option<TimeFormat>) -> &mut Self {
         self.layout.push(
             Component::TimeLeft(
-                fmt.unwrap_or(TimeFormat::TimeFmt3),
+                fmt.unwrap_or(TimeFormat::Fmt1),
             )
         );
         self
@@ -78,7 +78,7 @@ impl ProgressBarStyle {
     pub fn time_elapsed(&mut self, fmt: Option<TimeFormat>) -> &mut Self {
         self.layout.push(
             Component::TimeElapsed(
-                fmt.unwrap_or(TimeFormat::TimeFmt3),
+                fmt.unwrap_or(TimeFormat::Fmt1),
             )
         );
         self
@@ -87,16 +87,16 @@ impl ProgressBarStyle {
     pub fn time_total(&mut self, fmt: Option<TimeFormat>) -> &mut Self {
         self.layout.push(
             Component::TimeTotal(
-                fmt.unwrap_or(TimeFormat::TimeFmt3),
+                fmt.unwrap_or(TimeFormat::Fmt1),
             )
         );
         self
     }
 
-    pub fn speed(&mut self, fmt: Option<TimeFormat>) -> &mut Self {
+    pub fn speed(&mut self, fmt: Option<UnitFormat>) -> &mut Self {
         self.layout.push(
-            Component::TimeTotal(
-                fmt.unwrap_or(TimeFormat::TimeFmt3),
+            Component::Speed(
+                fmt.unwrap_or(UnitFormat::Default),
             )
         );
         self

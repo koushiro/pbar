@@ -18,58 +18,12 @@ pub enum UnitFormat {
     /// format pure number.
     /// example: 123456
     Default,
-    /// format <1000 XXX; >=1000 X.XeY,
-    /// example: 567 (567 < 1000); 5.7e3 (5678 >= 1000) ...
-    Scientific,
     /// format XXX B; XXX.X KiB/MiB/GiB/TiB,
     /// example: 567B; 5678B / 1024 = 5.5KiB ...
     Bytes,
     /// format XXX B; XXX.X KB/MB/GB/TB,
     /// example: 567B; 5678B / 1000 = 5.7KB ...
     BytesDec,
-}
-
-#[derive(Clone)]
-pub enum TimeFormat {
-    /// format HH:MM::SS,
-    /// example: 00:00:01; 111:05:10 ...
-    TimeFmt1,
-    /// format MM::SS,
-    /// example: 00:01; 65:10 ...
-    TimeFmt2,
-    /// format X...XdHHhMMmSSs,
-    /// example: 1234d1h0m10s; 10h10m10s; 1h5m10s ...
-    TimeFmt3,
-}
-
-pub enum FormattedDuration {
-    Basic(Duration),
-    Readable(Duration),
-}
-
-impl fmt::Display for FormattedDuration {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match *self {
-            FormattedDuration::Basic(d) => {
-                let (days, hours, mins, secs)
-                    = duration_to_datetime(d);
-                if days == 0 {
-                    write!(f, "{:02}:{:02}:{:02}", hours, mins, secs)
-                } else {
-                    write!(f, "{}d:{:02}:{:02}:{:02}", days, hours, mins, secs)
-                }
-            },
-
-            FormattedDuration::Readable(d) => {
-                let (days, hours, mins, secs)
-                    = duration_to_datetime(d);
-                if secs == 0 || mins == 0 { return write!(f, "{}s", secs); }
-                if hours == 0 { return write!(f, "{}m{}s", mins, secs); }
-                if days == 0 { return write!(f, "{}h{}m{}s", hours, mins, secs); }
-                write!(f, "{}d{}h{}m{}s", days, hours, mins, secs)
-            },
-        }
-    }
 }
 
 pub enum FormattedUnit {
@@ -82,13 +36,7 @@ impl fmt::Display for FormattedUnit {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
             FormattedUnit::Default(unit) => {
-                match unit {
-                    unit if unit >= TB => write!(f, "{:.*}T", 1, unit / TB),
-                    unit if unit >= GB => write!(f, "{:.*}G", 1, unit / GB),
-                    unit if unit >= MB => write!(f, "{:.*}M", 1, unit / MB),
-                    unit if unit >= KB => write!(f, "{:.*}K", 1, unit / KB),
-                    _ => write!(f, "{:.*}", 0, unit),
-                }
+                write!(f, "{:.*}", 0, unit)
             },
 
             FormattedUnit::Bytes(unit) => {
@@ -109,64 +57,113 @@ impl fmt::Display for FormattedUnit {
                     unit if unit >= KB => write!(f, "{:.*}KB", 1, unit / KB),
                     _ => write!(f, "{:.*}B", 0, unit),
                 }
-            }
+            },
+        }
+    }
+}
+
+#[derive(Clone)]
+pub enum TimeFormat {
+    /// format: MM:SS | HH:MM:SS | XX..Xd:HH:MM::SS
+    /// example: 00:01; 59:59; 01:00:01; 1234d:23:05:10 ...
+    Fmt1,
+    /// format: SSs | MMmSSs | HHhMMmSSs | XX..XdHHhMMmSSs
+    /// example: 59s; 59m01s; 59m59s; 23h59m59s; 1234d01h00m10s ...
+    Fmt2,
+}
+
+pub enum FormattedTime {
+    Fmt1(Duration),
+    Fmt2(Duration),
+}
+
+impl fmt::Display for FormattedTime {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            FormattedTime::Fmt1(d) => {
+                let (days, hours, mins, secs)
+                    = duration_to_datetime(d);
+                if days != 0 {
+                    return write!(f, "{}d:{:02}:{:02}:{:02}",
+                                  days, hours, mins, secs);
+                }
+                if hours != 0 {
+                    return write!(f, "{:02}:{:02}:{:02}", hours, mins, secs);
+                }
+                write!(f, "{:02}:{:02}", mins, secs)
+            },
+
+            FormattedTime::Fmt2(d) => {
+                let (days, hours, mins, secs)
+                    = duration_to_datetime(d);
+                if days != 0 {
+                    return write!(f, "{}d{}h{}m{}s", days, hours, mins, secs);
+                }
+                if hours != 0 {
+                    return write!(f, "{}h{}m{}s", hours, mins, secs);
+                }
+                if mins != 0 {
+                    return write!(f, "{}m{}s", mins, secs);
+                }
+                write!(f, "{}s", secs)
+            },
         }
     }
 }
 
 #[test]
-fn test_duration_format() {
-    let mut basic = FormattedDuration::Basic(Duration::new(30, 0));
-    assert_eq!(String::from("00:00:30"), format!("{}", basic));
-    basic = FormattedDuration::Basic(Duration::new(90, 0));
-    assert_eq!(String::from("00:01:30"), format!("{}", basic));
-    basic = FormattedDuration::Basic(Duration::new(3690, 0));
-    assert_eq!(String::from("01:01:30"), format!("{}", basic));
-    basic = FormattedDuration::Basic(Duration::new(90090, 0));
-    assert_eq!(String::from("1d:01:01:30"), format!("{}", basic));
+fn test_unit_format() {
+    let mut unit = FormattedUnit::Default(TB+256f64*GB);
+    assert_eq!(String::from("1256000000000"), format!("{}", unit));
+    unit = FormattedUnit::Default(2048f64*MB);
+    assert_eq!(String::from("2048000000"), format!("{}", unit));
+    unit = FormattedUnit::Default(2f64*MB+256f64*KB);
+    assert_eq!(String::from("2256000"), format!("{}", unit));
+    unit = FormattedUnit::Default(2f64*KB+512f64);
+    assert_eq!(String::from("2512"), format!("{}", unit));
+    unit = FormattedUnit::Default(999f64);
+    assert_eq!(String::from("999"), format!("{}", unit));
 
-    let mut readable = FormattedDuration::Readable(Duration::new(30, 0));
-    assert_eq!(String::from("30s"), format!("{}", readable));
-    readable = FormattedDuration::Readable(Duration::new(90, 0));
-    assert_eq!(String::from("1m30s"), format!("{}", readable));
-    readable = FormattedDuration::Readable(Duration::new(3690, 0));
-    assert_eq!(String::from("1h1m30s"), format!("{}", readable));
-    readable = FormattedDuration::Readable(Duration::new(90090, 0));
-    assert_eq!(String::from("1d1h1m30s"), format!("{}", readable));
+    unit = FormattedUnit::Bytes(TIB+256f64*GIB);
+    assert_eq!(String::from("1.2TiB"), format!("{}", unit));
+    unit = FormattedUnit::Bytes(2048f64*MIB);
+    assert_eq!(String::from("2.0GiB"), format!("{}", unit));
+    unit = FormattedUnit::Bytes(2f64*MIB+256f64*KB);
+    assert_eq!(String::from("2.2MiB"), format!("{}", unit));
+    unit = FormattedUnit::Bytes(2f64*KIB+512f64);
+    assert_eq!(String::from("2.5KiB"), format!("{}", unit));
+    unit = FormattedUnit::Bytes(999f64);
+    assert_eq!(String::from("999B"), format!("{}", unit));
+
+    unit = FormattedUnit::BytesDec(TB+256f64*GB);
+    assert_eq!(String::from("1.3TB"), format!("{}", unit));
+    unit = FormattedUnit::BytesDec(2048f64*MB);
+    assert_eq!(String::from("2.0GB"), format!("{}", unit));
+    unit = FormattedUnit::BytesDec(2f64*MB+256f64*KB);
+    assert_eq!(String::from("2.3MB"), format!("{}", unit));
+    unit = FormattedUnit::BytesDec(2f64*KB+512f64);
+    assert_eq!(String::from("2.5KB"), format!("{}", unit));
+    unit = FormattedUnit::BytesDec(999f64);
+    assert_eq!(String::from("999B"), format!("{}", unit));
 }
 
 #[test]
-fn test_unit_format() {
-    let mut default = FormattedUnit::Default(TB+256f64*GB);
-    assert_eq!(String::from("1.3T"), format!("{}", default));
-    default = FormattedUnit::Default(2048f64*MB);
-    assert_eq!(String::from("2.0G"), format!("{}", default));
-    default = FormattedUnit::Default(2f64*MB+256f64*KB);
-    assert_eq!(String::from("2.3M"), format!("{}", default));
-    default = FormattedUnit::Default(2f64*KB+512f64);
-    assert_eq!(String::from("2.5K"), format!("{}", default));
-    default = FormattedUnit::Default(999f64);
-    assert_eq!(String::from("999"), format!("{}", default));
+fn test_time_format() {
+    let mut time = FormattedTime::Fmt1(Duration::new(30, 0));
+    assert_eq!(String::from("00:30"), format!("{}", time));
+    time = FormattedTime::Fmt1(Duration::new(90, 0));
+    assert_eq!(String::from("01:30"), format!("{}", time));
+    time = FormattedTime::Fmt1(Duration::new(3690, 0));
+    assert_eq!(String::from("01:01:30"), format!("{}", time));
+    time = FormattedTime::Fmt1(Duration::new(90090, 0));
+    assert_eq!(String::from("1d:01:01:30"), format!("{}", time));
 
-    let mut bytes = FormattedUnit::Bytes(TIB+256f64*GIB);
-    assert_eq!(String::from("1.2TiB"), format!("{}", bytes));
-    bytes = FormattedUnit::Bytes(2048f64*MIB);
-    assert_eq!(String::from("2.0GiB"), format!("{}", bytes));
-    bytes = FormattedUnit::Bytes(2f64*MIB+256f64*KB);
-    assert_eq!(String::from("2.2MiB"), format!("{}", bytes));
-    bytes = FormattedUnit::Bytes(2f64*KIB+512f64);
-    assert_eq!(String::from("2.5KiB"), format!("{}", bytes));
-    bytes = FormattedUnit::Bytes(999f64);
-    assert_eq!(String::from("999B"), format!("{}", bytes));
-
-    let mut bytes_dec = FormattedUnit::BytesDec(TB+256f64*GB);
-    assert_eq!(String::from("1.3TB"), format!("{}", bytes_dec));
-    bytes_dec = FormattedUnit::BytesDec(2048f64*MB);
-    assert_eq!(String::from("2.0GB"), format!("{}", bytes_dec));
-    bytes_dec = FormattedUnit::BytesDec(2f64*MB+256f64*KB);
-    assert_eq!(String::from("2.3MB"), format!("{}", bytes_dec));
-    bytes_dec = FormattedUnit::BytesDec(2f64*KB+512f64);
-    assert_eq!(String::from("2.5KB"), format!("{}", bytes_dec));
-    bytes_dec = FormattedUnit::BytesDec(999f64);
-    assert_eq!(String::from("999B"), format!("{}", bytes_dec));
+    time = FormattedTime::Fmt2(Duration::new(30, 0));
+    assert_eq!(String::from("30s"), format!("{}", time));
+    time = FormattedTime::Fmt2(Duration::new(90, 0));
+    assert_eq!(String::from("1m30s"), format!("{}", time));
+    time = FormattedTime::Fmt2(Duration::new(3690, 0));
+    assert_eq!(String::from("1h1m30s"), format!("{}", time));
+    time = FormattedTime::Fmt2(Duration::new(90090, 0));
+    assert_eq!(String::from("1d1h1m30s"), format!("{}", time));
 }

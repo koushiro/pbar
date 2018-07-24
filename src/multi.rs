@@ -1,7 +1,6 @@
 use std::io;
-use std::sync::{mpsc, Mutex};
+use std::sync::mpsc;
 
-use term::*;
 use bar::*;
 
 pub struct MultiProgressBar {
@@ -36,7 +35,7 @@ impl MultiProgressBar {
     }
 
     pub fn attach(&mut self, total: u64) -> ProgressBar {
-        /// index from 0 to bars.len()-1
+        // index from 0 to bars.len()-1
         let index = self.bars.len();
         self.bars.push(String::new());
         self.nbars += 1;
