@@ -2,7 +2,7 @@ use format::*;
 
 #[derive(Clone)]
 pub enum Component {
-    Counter(String, UnitFormat),    // Current Separator Total
+    Counter(String, UnitFormat),    // layout - Current Delimiter Total
     Speed(UnitFormat),
     Percent,
     Bar(Vec<char>, usize),
@@ -18,7 +18,8 @@ pub struct ProgressBarStyle {
 }
 
 impl ProgressBarStyle {
-    /// Return the default progress bar style.
+    /// Return a default progress bar style,
+    /// including 'Counter','Percent','Bar','TimeLeft' components.
     pub fn default() -> ProgressBarStyle {
         ProgressBarStyle {
             layout: vec![
@@ -30,13 +31,15 @@ impl ProgressBarStyle {
         }
     }
 
-    /// Return the progress bar style without any content.
+    /// Return a customizable progress bar style without any content.
     pub fn customizable() -> ProgressBarStyle {
         ProgressBarStyle {
             layout: vec![],
         }
     }
 
+    /// Add 'counter' component to the style,
+    /// default delimiter is '/'; default format is pure number.
     pub fn counter(&mut self, delimiter: Option<String>,
                    fmt: Option<UnitFormat>) -> &mut Self
     {
@@ -49,6 +52,7 @@ impl ProgressBarStyle {
         self
     }
 
+    /// Add 'percent' component to the style.
     pub fn percent(&mut self) -> &mut Self {
         self.layout.push(
             Component::Percent
@@ -56,6 +60,8 @@ impl ProgressBarStyle {
         self
     }
 
+    /// Add 'bar' component to the style,
+    /// default bar width is 30.
     pub fn bar(&mut self, s: &str,  width: Option<usize>) -> &mut Self {
         self.layout.push(
             Component::Bar(
@@ -66,6 +72,8 @@ impl ProgressBarStyle {
         self
     }
 
+    /// Add 'time_left' component to the style,
+    /// default format is like MM:SS | HH:MM:SS | XX..Xd:HH:MM::SS.
     pub fn time_left(&mut self, fmt: Option<TimeFormat>) -> &mut Self {
         self.layout.push(
             Component::TimeLeft(
@@ -75,6 +83,8 @@ impl ProgressBarStyle {
         self
     }
 
+    /// Add 'time_elapsed' component to the style,
+    /// default format is like MM:SS | HH:MM:SS | XX..Xd:HH:MM::SS.
     pub fn time_elapsed(&mut self, fmt: Option<TimeFormat>) -> &mut Self {
         self.layout.push(
             Component::TimeElapsed(
@@ -84,6 +94,8 @@ impl ProgressBarStyle {
         self
     }
 
+    /// Add 'time_total' component to the style,
+    /// default format is like MM:SS | HH:MM:SS | XX..Xd:HH:MM::SS.
     pub fn time_total(&mut self, fmt: Option<TimeFormat>) -> &mut Self {
         self.layout.push(
             Component::TimeTotal(
@@ -93,6 +105,8 @@ impl ProgressBarStyle {
         self
     }
 
+    /// Add 'speed' component to the style,
+    /// default format is pure number.
     pub fn speed(&mut self, fmt: Option<UnitFormat>) -> &mut Self {
         self.layout.push(
             Component::Speed(
@@ -102,6 +116,7 @@ impl ProgressBarStyle {
         self
     }
 
+    /// Add 'delimiter' component to the style.
     pub fn delimiter(&mut self, s: &str) -> &mut Self {
         self.layout.push(
             Component::Delimiter(

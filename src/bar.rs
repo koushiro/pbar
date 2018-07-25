@@ -55,7 +55,7 @@ impl ProgressBarTarget {
     pub fn move_cursor_up(&self, n: usize) {
         match self.kind {
             ProgressBarTargetKind::Term(ref term) => {
-                term.move_cursor_up(n);
+                term.move_cursor_up(n).unwrap();
             },
             _ => {},
         }
@@ -64,7 +64,7 @@ impl ProgressBarTarget {
     pub fn move_cursor_down(&self, n: usize) {
         match self.kind {
             ProgressBarTargetKind::Term(ref term) => {
-                term.move_cursor_down(n);
+                term.move_cursor_down(n).unwrap();
             },
             _ => {},
         }
@@ -74,7 +74,7 @@ impl ProgressBarTarget {
     pub fn draw(&self, line: String) -> io::Result<()> {
         match self.kind {
             ProgressBarTargetKind::Term(ref term) => {
-                term.write_target(line.as_bytes());
+                term.write_target(line.as_bytes()).unwrap();
             },
             _ => {},
         }
@@ -85,7 +85,7 @@ impl ProgressBarTarget {
     pub fn handle_draw_info(&self, info: ProgressBarDrawInfo) -> io::Result<()> {
         match self.kind {
             ProgressBarTargetKind::Term(ref term) => {
-                term.write_target(info.line.as_bytes());
+                term.write_target(info.line.as_bytes()).unwrap();
             },
             ProgressBarTargetKind::Channel(index, ref tx) => {
                 tx.send((index, info)).unwrap();
@@ -158,8 +158,8 @@ pub struct ProgressBar {
 }
 
 impl ProgressBar {
-    /// Construct a progress bar with default style.
-    pub fn new(total: u64) -> ProgressBar {
+    /// Construct a progress bar with default style on stdout.
+    pub fn stdout(total: u64) -> ProgressBar {
         let target = ProgressBarTarget::stdout();
         let width = target.terminal_width();
         ProgressBar {
@@ -177,9 +177,46 @@ impl ProgressBar {
         }
     }
 
-    /// Set target for the progress bar
-    pub fn set_target(&mut self, target: ProgressBarTarget) {
-        self.target = target;
+    /// Construct a progress bar with default style on stderr.
+    pub fn stderr(total: u64) -> ProgressBar {
+        let target = ProgressBarTarget::stderr();
+        let width = target.terminal_width();
+        ProgressBar {
+            target,
+            ctxt: ProgressBarContext {
+                width,
+                current: 0,
+                total,
+                title: String::new(),
+                start_time: Instant::now(),
+                last_refresh_time: Instant::now(),
+                refresh_rate: Duration::from_millis(500),
+            },
+            style: ProgressBarStyle::default(),
+        }
+    }
+
+    /// Construct a progress bar with default style for MultiProgressBar specially.
+    pub fn channel(total: u64, index: usize,
+                   tx: mpsc::Sender<(usize, ProgressBarDrawInfo)>)
+        -> ProgressBar
+    {
+        let stdout = ProgressBarTarget::stdout();
+        let target = ProgressBarTarget::channel(index, tx);
+        let width = stdout.terminal_width();
+        ProgressBar {
+            target,
+            ctxt: ProgressBarContext {
+                width,
+                current: 0,
+                total,
+                title: String::new(),
+                start_time: Instant::now(),
+                last_refresh_time: Instant::now(),
+                refresh_rate: Duration::from_millis(500),
+            },
+            style: ProgressBarStyle::default(),
+        }
     }
 
     /// Set customize style for the progress bar.
@@ -200,7 +237,7 @@ impl ProgressBar {
         self
     }
 
-    /// Set refresh rate that drawing progress.
+    /// Set refresh rate that drawing progress, default rate is 500ms.
     pub fn set_refresh_rate(&mut self, rate: Duration) ->&mut Self {
         self.ctxt.refresh_rate = rate;
         self
@@ -238,7 +275,7 @@ impl ProgressBar {
         self.target.handle_draw_info(ProgressBarDrawInfo {
             line,
             done: true,
-        });
+        }).unwrap();
     }
 
     /// Finish progress and replace the progress bar with message 'msg'.
@@ -252,7 +289,7 @@ impl ProgressBar {
         self.target.handle_draw_info(ProgressBarDrawInfo {
             line,
             done: true,
-        });
+        }).unwrap();
     }
 
     fn update(&mut self, is_force: bool) {
@@ -268,7 +305,7 @@ impl ProgressBar {
             self.target.handle_draw_info(ProgressBarDrawInfo {
                 line,
                 done: false,
-            });
+            }).unwrap();
         }
     }
 }
@@ -312,8 +349,7 @@ impl ProgressBar {
     }
 
     fn fmt_title(&self) -> String {
-        let title = &self.ctxt.title;
-        format!("\r{:<width$} ", title, width = title.len() + 3)
+        format!("\r{:<} ", self.ctxt.title)
     }
 
     fn fmt_counter(&self, delimiter: &str, fmt: &UnitFormat) -> String {

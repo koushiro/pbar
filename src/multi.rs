@@ -39,10 +39,7 @@ impl MultiProgressBar {
         let index = self.bars.len();
         self.bars.push(String::new());
         self.nbars += 1;
-        let mut bar = ProgressBar::new(total);
-        // set the index of attached bar and channel sender.
-        bar.set_target(ProgressBarTarget::channel(index, self.tx.clone()));
-        bar
+        ProgressBar::channel(total, index, self.tx.clone())
     }
 
     pub fn join(&mut self) -> io::Result<()> {
@@ -50,7 +47,7 @@ impl MultiProgressBar {
     }
 
     pub fn join_with_msg(&mut self, msg: &str) -> io::Result<()> {
-        self.listen();
+        self.listen().unwrap();
         self.target.draw(msg.to_string())
     }
 
@@ -72,7 +69,7 @@ impl MultiProgressBar {
                 out.push_str(&format!("\r{}\n", bar));
             }
 
-            self.target.draw(out);
+            self.target.draw(out).unwrap();
 
             if info.done {
                 self.nbars -= 1;

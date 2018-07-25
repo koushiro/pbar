@@ -81,11 +81,9 @@ impl fmt::Display for FormattedTime {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
             FormattedTime::Fmt1(d) => {
-                let (days, hours, mins, secs)
-                    = duration_to_datetime(d);
+                let (days, hours, mins, secs) = duration_to_datetime(d);
                 if days != 0 {
-                    return write!(f, "{}d:{:02}:{:02}:{:02}",
-                                  days, hours, mins, secs);
+                    return write!(f, "{}d:{:02}:{:02}:{:02}", days, hours, mins, secs);
                 }
                 if hours != 0 {
                     return write!(f, "{:02}:{:02}:{:02}", hours, mins, secs);
@@ -94,16 +92,15 @@ impl fmt::Display for FormattedTime {
             },
 
             FormattedTime::Fmt2(d) => {
-                let (days, hours, mins, secs)
-                    = duration_to_datetime(d);
+                let (days, hours, mins, secs) = duration_to_datetime(d);
                 if days != 0 {
-                    return write!(f, "{}d{}h{}m{}s", days, hours, mins, secs);
+                    return write!(f, "{}d{:02}h{:02}m{:02}s", days, hours, mins, secs);
                 }
                 if hours != 0 {
-                    return write!(f, "{}h{}m{}s", hours, mins, secs);
+                    return write!(f, "{:02}h{:02}m{:02}s", hours, mins, secs);
                 }
                 if mins != 0 {
-                    return write!(f, "{}m{}s", mins, secs);
+                    return write!(f, "{:02}m{:02}s", mins, secs);
                 }
                 write!(f, "{}s", secs)
             },
@@ -161,9 +158,9 @@ fn test_time_format() {
     time = FormattedTime::Fmt2(Duration::new(30, 0));
     assert_eq!(String::from("30s"), format!("{}", time));
     time = FormattedTime::Fmt2(Duration::new(90, 0));
-    assert_eq!(String::from("1m30s"), format!("{}", time));
+    assert_eq!(String::from("01m30s"), format!("{}", time));
     time = FormattedTime::Fmt2(Duration::new(3690, 0));
-    assert_eq!(String::from("1h1m30s"), format!("{}", time));
+    assert_eq!(String::from("01h01m30s"), format!("{}", time));
     time = FormattedTime::Fmt2(Duration::new(90090, 0));
-    assert_eq!(String::from("1d1h1m30s"), format!("{}", time));
+    assert_eq!(String::from("1d01h01m30s"), format!("{}", time));
 }

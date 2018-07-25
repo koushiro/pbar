@@ -7,7 +7,7 @@ use pbar::ProgressBar;
 
 fn main() {
     let count = 10000;
-    let mut pbar = ProgressBar::new(count);
+    let mut pbar = ProgressBar::stdout(count);
     pbar.set_title("Simple:");
     for _ in 0..count {
         pbar.increase();
