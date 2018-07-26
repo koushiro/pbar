@@ -4,7 +4,12 @@ A terminal progress bar written in Rust inspired from [indicatif](https://github
 
 ## Usage
 
-Not publish to [crates.io](https://crates.io) yet, please clone repo to local.
+Not publish to [crates.io](https://crates.io) yet, please add github repo into dependency.
+
+```toml
+[dependencies]
+pbar = { git = "https://github.com/koushiro/pbar" }
+```
 
 ### examples
 
