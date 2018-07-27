@@ -10,37 +10,37 @@ fn main() {
     let style = ProgressBarStyle::default();
 
     let count: u64 = 1000;
-    let mut bar = multibars.attach(count);
-    bar.set_style(style.clone());
+    let mut bar1 = multibars.attach(count);
+    bar1.set_title("item #1:")
+        .set_style(style.clone());
     let _ = thread::spawn(move || {
-        bar.set_title("item #1:");
         for _ in 0..count {
-            bar.increase();
+            bar1.increase();
             thread::sleep(Duration::from_millis(10));
         }
-        bar.finish_and_clear("item #1: done");
+        bar1.finish_and_clear("item #1: done");
     });
 
-    let mut bar = multibars.attach(count);
-    bar.set_style(style.clone());
+    let mut bar2 = multibars.attach(count);
+    bar2.set_title("item #2:")
+        .set_style(style.clone());
     let _ = thread::spawn(move || {
-        bar.set_title("item #2:");
         for _ in 0..count {
-            bar.increase();
+            bar2.increase();
             thread::sleep(Duration::from_millis(20));
         }
-        bar.finish_and_clear("item #2: done");
+        bar2.finish_and_clear("item #2: done");
     });
 
-    let mut bar = multibars.attach(count);
-    bar.set_style(style.clone());
+    let mut bar3 = multibars.attach(count);
+    bar3.set_title("item #3:")
+        .set_style(style.clone());
     let _ = thread::spawn(move || {
-        bar.set_title("item #3:");
         for _ in 0..count {
-            bar.increase();
+            bar3.increase();
             thread::sleep(Duration::from_millis(30));
         }
-        bar.finish_and_clear("item #3: done");
+        bar3.finish_and_clear("item #3: done");
     });
 
     multibars.join_with_msg("All done...").unwrap();

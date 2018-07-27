@@ -3,15 +3,19 @@ name = "pbar"
 version = "0.1.0"
 authors = ["koushiro <https://github.com/koushiro>"]
 description = "A terminal progress bar."
-license = "MIT"
-keywords = ["terminal", "progress", "bar", "cli"]
-readme = "README.md"
-homepage = "https://github.com/koushiro/pbar"
 documentation = "http://doc.rust-lang.org/pbar"
+homepage = "https://github.com/koushiro/pbar"
 repository = "https://github.com/koushiro/pbar"
+readme = "README.md"
+keywords = ["terminal", "progress", "bar", "cli"]
+categories = ["command-line-interface", "command-line-utilities"]
+license = "MIT"
+publish = false
 
 [dependencies]
 libc = "0.2"
+
+[dev-dependencies]
 chrono = "0.4"
 
 [target.'cfg(windows)'.dependencies]

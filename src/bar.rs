@@ -338,7 +338,7 @@ impl ProgressBar {
                 Component::Speed(fmt) => {
                     self.fmt_speed(self.ctxt.speed(), fmt)
                 },
-                Component::Delimiter(s) => {
+                Component::Str(s) => {
                     s.to_string()
                 },
             };

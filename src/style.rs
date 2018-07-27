@@ -2,14 +2,14 @@ use format::*;
 
 #[derive(Clone)]
 pub enum Component {
-    Counter(String, UnitFormat),    // layout - Current Delimiter Total
+    Counter(String, UnitFormat),    // layout - Current Str("/") Total
     Speed(UnitFormat),
     Percent,
     Bar(Vec<char>, usize),
     TimeLeft(TimeFormat),
     TimeElapsed(TimeFormat),
     TimeTotal(TimeFormat),
-    Delimiter(String),
+    Str(String),
 }
 
 #[derive(Clone)]
@@ -116,10 +116,10 @@ impl ProgressBarStyle {
         self
     }
 
-    /// Add 'delimiter' component to the style.
-    pub fn delimiter(&mut self, s: &str) -> &mut Self {
+    /// Add 'str' component to the style, like delimiter.
+    pub fn str(&mut self, s: &str) -> &mut Self {
         self.layout.push(
-            Component::Delimiter(
+            Component::Str(
                 s.to_string(),
             )
         );

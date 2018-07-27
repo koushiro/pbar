@@ -19,7 +19,8 @@ fn main() {
 
     let mut style = ProgressBarStyle::customizable();
     style.counter(None, None)
-        .percent().bar(" ██░ ", Some(40));
+        .percent()
+        .bar("|██░|", Some(40));
 
     pbar.set_title(&format!("{} year progress:", dt.year())[..])
         .set_style(style);
