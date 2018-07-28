@@ -1,6 +1,9 @@
 # pbar
 
-A terminal progress bar written in Rust inspired from [indicatif](https://github.com/mitsuhiko/indicatif), [pb-rustlang](https://github.com/a8m/pb) and [pb-golang](https://github.com/cheggaaa/pb), tested on Archlinux and Windows.
+This is a terminal progress bar library written in Rust,
+inspired by [indicatif](https://github.com/mitsuhiko/indicatif),
+[pb-rustlang](https://github.com/a8m/pb) and [pb-golang](https://github.com/cheggaaa/pb),
+tested on Archlinux and Windows 10.
 
 ## Usage
 
