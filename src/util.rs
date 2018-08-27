@@ -15,11 +15,15 @@ pub fn duration_to_datetime(d: Duration) -> (u64, u64, u64, u64) {
 
     let seconds = t % 60;
     t /= 60;
-    if t == 0 { return (0u64, 0u64, 0u64, seconds); }
+    if t == 0 {
+        return (0u64, 0u64, 0u64, seconds);
+    }
 
     let minutes = t % 60;
     t /= 60;
-    if t == 0 { return (0u64, 0u64, minutes, seconds); }
+    if t == 0 {
+        return (0u64, 0u64, minutes, seconds);
+    }
 
     let hours = t % 24;
     t /= 24;
@@ -38,8 +42,7 @@ fn test_duration_convert() {
 
 #[test]
 fn test_duration_to_datetime() {
-    let (day, hour, minute, second)
-        = duration_to_datetime(Duration::new(90090, 0));
+    let (day, hour, minute, second) = duration_to_datetime(Duration::new(90090, 0));
     assert_eq!(day, 1);
     assert_eq!(hour, 1);
     assert_eq!(minute, 1);

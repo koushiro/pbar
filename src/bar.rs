@@ -1,12 +1,12 @@
 use std::io;
-use std::time::{Duration, Instant};
 use std::iter::repeat;
 use std::sync::mpsc;
+use std::time::{Duration, Instant};
 
-use term::*;
-use util::*;
 use format::*;
 use style::*;
+use term::*;
+use util::*;
 
 pub struct ProgressBarDrawInfo {
     pub line: String,
@@ -35,9 +35,10 @@ impl ProgressBarTarget {
         }
     }
 
-    pub fn channel(index: usize, tx: mpsc::Sender<(usize, ProgressBarDrawInfo)>)
-        -> ProgressBarTarget
-    {
+    pub fn channel(
+        index: usize,
+        tx: mpsc::Sender<(usize, ProgressBarDrawInfo)>,
+    ) -> ProgressBarTarget {
         ProgressBarTarget {
             kind: ProgressBarTargetKind::Channel(index, tx),
         }
@@ -45,10 +46,8 @@ impl ProgressBarTarget {
 
     pub fn terminal_width(&self) -> usize {
         match self.kind {
-            ProgressBarTargetKind::Term(ref term) => {
-                term.terminal_size().0
-            },
-            _ => { 0 },
+            ProgressBarTargetKind::Term(ref term) => term.terminal_size().0,
+            _ => 0,
         }
     }
 
@@ -56,8 +55,8 @@ impl ProgressBarTarget {
         match self.kind {
             ProgressBarTargetKind::Term(ref term) => {
                 term.move_cursor_up(n).unwrap();
-            },
-            _ => {},
+            }
+            _ => {}
         }
     }
 
@@ -65,8 +64,8 @@ impl ProgressBarTarget {
         match self.kind {
             ProgressBarTargetKind::Term(ref term) => {
                 term.move_cursor_down(n).unwrap();
-            },
-            _ => {},
+            }
+            _ => {}
         }
     }
 
@@ -75,8 +74,8 @@ impl ProgressBarTarget {
         match self.kind {
             ProgressBarTargetKind::Term(ref term) => {
                 term.write_target(line.as_bytes()).unwrap();
-            },
-            _ => {},
+            }
+            _ => {}
         }
         Ok(())
     }
@@ -86,10 +85,10 @@ impl ProgressBarTarget {
         match self.kind {
             ProgressBarTargetKind::Term(ref term) => {
                 term.write_target(info.line.as_bytes()).unwrap();
-            },
+            }
             ProgressBarTargetKind::Channel(index, ref tx) => {
                 tx.send((index, info)).unwrap();
-            },
+            }
         }
         Ok(())
     }
@@ -142,8 +141,9 @@ impl ProgressBarContext {
         }
 
         let d = self.time_elapsed();
-        secs_to_duration(duration_to_secs(d) *
-            (self.total - self.current) as f64 / self.current as f64)
+        secs_to_duration(
+            duration_to_secs(d) * (self.total - self.current) as f64 / self.current as f64,
+        )
     }
 
     pub fn time_total(&self) -> Duration {
@@ -197,10 +197,11 @@ impl ProgressBar {
     }
 
     /// Construct a progress bar with default style for MultiProgressBar specially.
-    pub fn channel(total: u64, index: usize,
-                   tx: mpsc::Sender<(usize, ProgressBarDrawInfo)>)
-        -> ProgressBar
-    {
+    pub fn channel(
+        total: u64,
+        index: usize,
+        tx: mpsc::Sender<(usize, ProgressBarDrawInfo)>,
+    ) -> ProgressBar {
         let stdout = ProgressBarTarget::stdout();
         let target = ProgressBarTarget::channel(index, tx);
         let width = stdout.terminal_width();
@@ -238,7 +239,7 @@ impl ProgressBar {
     }
 
     /// Set refresh rate that drawing progress, default rate is 500ms.
-    pub fn set_refresh_rate(&mut self, rate: Duration) ->&mut Self {
+    pub fn set_refresh_rate(&mut self, rate: Duration) -> &mut Self {
         self.ctxt.refresh_rate = rate;
         self
     }
@@ -272,10 +273,9 @@ impl ProgressBar {
         self.ctxt.current = self.ctxt.total;
         self.update(false);
         let line = format!("\n{}", msg);
-        self.target.handle_draw_info(ProgressBarDrawInfo {
-            line,
-            done: true,
-        }).unwrap();
+        self.target
+            .handle_draw_info(ProgressBarDrawInfo { line, done: true })
+            .unwrap();
     }
 
     /// Finish progress and replace the progress bar with message 'msg'.
@@ -283,29 +283,29 @@ impl ProgressBar {
         self.ctxt.current = self.ctxt.total;
         self.update(false);
         let msg_len = msg.len();
-        let line = format!("\r{}{}", msg,
-                            repeat(" ").take(self.ctxt.width - msg_len)
-                                .collect::<String>());
-        self.target.handle_draw_info(ProgressBarDrawInfo {
-            line,
-            done: true,
-        }).unwrap();
+        let line = format!(
+            "\r{}{}",
+            msg,
+            repeat(" ")
+                .take(self.ctxt.width - msg_len)
+                .collect::<String>()
+        );
+        self.target
+            .handle_draw_info(ProgressBarDrawInfo { line, done: true })
+            .unwrap();
     }
 
     fn update(&mut self, is_force: bool) {
         let now = Instant::now();
         let duration = now.duration_since(self.ctxt.last_refresh_time);
 
-        if is_force || self.ctxt.is_finish() ||
-            duration >= self.ctxt.refresh_rate {
-
+        if is_force || self.ctxt.is_finish() || duration >= self.ctxt.refresh_rate {
             self.ctxt.last_refresh_time = now;
 
             let line = self.dispatch();
-            self.target.handle_draw_info(ProgressBarDrawInfo {
-                line,
-                done: false,
-            }).unwrap();
+            self.target
+                .handle_draw_info(ProgressBarDrawInfo { line, done: false })
+                .unwrap();
         }
     }
 }
@@ -317,30 +317,14 @@ impl ProgressBar {
 
         for component in &self.style.layout {
             let s = match component {
-                Component::Counter(delimiter, fmt) => {
-                    self.fmt_counter(delimiter, fmt)
-                },
-                Component::Percent => {
-                    self.fmt_percent()
-                },
-                Component::Bar(symbols, width) => {
-                    self.fmt_bar(symbols, *width)
-                },
-                Component::TimeLeft(fmt) => {
-                    self.fmt_time(self.ctxt.time_left(), fmt)
-                },
-                Component::TimeElapsed(fmt) => {
-                    self.fmt_time(self.ctxt.time_elapsed(), fmt)
-                },
-                Component::TimeTotal(fmt) => {
-                    self.fmt_time(self.ctxt.time_total(), fmt)
-                },
-                Component::Speed(fmt) => {
-                    self.fmt_speed(self.ctxt.speed(), fmt)
-                },
-                Component::Str(s) => {
-                    s.to_string()
-                },
+                Component::Counter(delimiter, fmt) => self.fmt_counter(delimiter, fmt),
+                Component::Percent => self.fmt_percent(),
+                Component::Bar(symbols, width) => self.fmt_bar(symbols, *width),
+                Component::TimeLeft(fmt) => self.fmt_time(self.ctxt.time_left(), fmt),
+                Component::TimeElapsed(fmt) => self.fmt_time(self.ctxt.time_elapsed(), fmt),
+                Component::TimeTotal(fmt) => self.fmt_time(self.ctxt.time_total(), fmt),
+                Component::Speed(fmt) => self.fmt_speed(self.ctxt.speed(), fmt),
+                Component::Str(s) => s.to_string(),
             };
             out += &s;
             out += " ";
@@ -355,24 +339,24 @@ impl ProgressBar {
     fn fmt_counter(&self, delimiter: &str, fmt: &UnitFormat) -> String {
         let (current, total) = self.ctxt.current();
         match fmt {
-            UnitFormat::Default => {
-                format!("{:>} {} {:<}",
-                        FormattedUnit::Default(current as f64), delimiter,
-                        FormattedUnit::Default(total as f64)
-                )
-            },
-            UnitFormat::Bytes => {
-                format!("{:>} {} {:<}",
-                        FormattedUnit::Bytes(current as f64), delimiter,
-                        FormattedUnit::Bytes(total as f64)
-                )
-            },
-            UnitFormat::BytesDec => {
-                format!("{:>} {} {:<}",
-                        FormattedUnit::BytesDec(current as f64), delimiter,
-                        FormattedUnit::BytesDec(total as f64)
-                )
-            },
+            UnitFormat::Default => format!(
+                "{:>} {} {:<}",
+                FormattedUnit::Default(current as f64),
+                delimiter,
+                FormattedUnit::Default(total as f64)
+            ),
+            UnitFormat::Bytes => format!(
+                "{:>} {} {:<}",
+                FormattedUnit::Bytes(current as f64),
+                delimiter,
+                FormattedUnit::Bytes(total as f64)
+            ),
+            UnitFormat::BytesDec => format!(
+                "{:>} {} {:<}",
+                FormattedUnit::BytesDec(current as f64),
+                delimiter,
+                FormattedUnit::BytesDec(total as f64)
+            ),
         }
     }
 
@@ -380,17 +364,17 @@ impl ProgressBar {
         let percent = self.ctxt.percent();
         let begin_part = symbols[0].to_string();
         let fill_len = (percent * bar_width as f64) as usize;
-        let fill_part = repeat(symbols[1])
-            .take(fill_len).collect::<String>();
+        let fill_part = repeat(symbols[1]).take(fill_len).collect::<String>();
         let cur_part = symbols[2].to_string();
         let empty_len = bar_width.saturating_sub(fill_len).saturating_sub(1);
-        let empty_part = repeat(symbols[3])
-            .take(empty_len).collect::<String>();
+        let empty_part = repeat(symbols[3]).take(empty_len).collect::<String>();
         let end_part = symbols[4].to_string();
 
         if !self.ctxt.is_finish() {
-            format!("{}{}{}{}{}", begin_part, fill_part, cur_part,
-                    empty_part, end_part)
+            format!(
+                "{}{}{}{}{}",
+                begin_part, fill_part, cur_part, empty_part, end_part
+            )
         } else {
             format!("{}{}{}", begin_part, fill_part, end_part)
         }
@@ -402,26 +386,16 @@ impl ProgressBar {
 
     fn fmt_time(&self, time: Duration, fmt: &TimeFormat) -> String {
         match fmt {
-            TimeFormat::Fmt1 => {
-                format!("{:<10}", FormattedTime::Fmt1(time))
-            }
-            TimeFormat::Fmt2 => {
-                format!("{:<10}", FormattedTime::Fmt2(time))
-            },
+            TimeFormat::Fmt1 => format!("{:<10}", FormattedTime::Fmt1(time)),
+            TimeFormat::Fmt2 => format!("{:<10}", FormattedTime::Fmt2(time)),
         }
     }
 
     fn fmt_speed(&self, speed: f64, fmt: &UnitFormat) -> String {
         match fmt {
-            UnitFormat::Default => {
-                format!("{:>8}it/s", FormattedUnit::Default(speed))
-            },
-            UnitFormat::Bytes => {
-                format!("{:>8}/s", FormattedUnit::Default(speed))
-            },
-            UnitFormat::BytesDec => {
-                format!("{:>8}/s", FormattedUnit::Default(speed))
-            },
+            UnitFormat::Default => format!("{:>8}it/s", FormattedUnit::Default(speed)),
+            UnitFormat::Bytes => format!("{:>8}/s", FormattedUnit::Default(speed)),
+            UnitFormat::BytesDec => format!("{:>8}/s", FormattedUnit::Default(speed)),
         }
     }
 }

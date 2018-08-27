@@ -1,16 +1,18 @@
-#[cfg(windows)] extern crate winapi;
-#[cfg(unix)] extern crate libc;
+#[cfg(unix)]
+extern crate libc;
+#[cfg(windows)]
+extern crate winapi;
 
 /// A abstract terminal module.
 mod term;
 
 mod bar;
+mod format;
 mod multi;
 mod style;
-mod format;
 mod util;
 
 pub use bar::ProgressBar;
+pub use format::{TimeFormat, UnitFormat};
 pub use multi::MultiProgressBar;
 pub use style::ProgressBarStyle;
-pub use format::{UnitFormat, TimeFormat};

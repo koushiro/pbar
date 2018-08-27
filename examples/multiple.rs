@@ -11,8 +11,7 @@ fn main() {
 
     let count: u64 = 1000;
     let mut bar1 = multibars.attach(count);
-    bar1.set_title("item #1:")
-        .set_style(style.clone());
+    bar1.set_title("item #1:").set_style(style.clone());
     let _ = thread::spawn(move || {
         for _ in 0..count {
             bar1.increase();
@@ -22,8 +21,7 @@ fn main() {
     });
 
     let mut bar2 = multibars.attach(count);
-    bar2.set_title("item #2:")
-        .set_style(style.clone());
+    bar2.set_title("item #2:").set_style(style.clone());
     let _ = thread::spawn(move || {
         for _ in 0..count {
             bar2.increase();
@@ -33,8 +31,7 @@ fn main() {
     });
 
     let mut bar3 = multibars.attach(count);
-    bar3.set_title("item #3:")
-        .set_style(style.clone());
+    bar3.set_title("item #3:").set_style(style.clone());
     let _ = thread::spawn(move || {
         for _ in 0..count {
             bar3.increase();

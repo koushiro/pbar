@@ -40,8 +40,7 @@ impl Term {
     }
 
     pub fn terminal_size(&self) -> (usize, usize) {
-        terminal_size(self)
-            .unwrap_or((TERM_DEFAULT_WIDTH, TERM_DEFAULT_HEIGHT))
+        terminal_size(self).unwrap_or((TERM_DEFAULT_WIDTH, TERM_DEFAULT_HEIGHT))
     }
 
     pub fn move_cursor_up(&self, n: usize) -> io::Result<()> {
@@ -57,11 +56,11 @@ impl Term {
             TermTargetKind::Stdout => {
                 io::stdout().write_all(bytes)?;
                 io::stdout().flush()?;
-            },
+            }
             TermTargetKind::Stderr => {
                 io::stderr().write_all(bytes)?;
                 io::stderr().flush()?;
-            },
+            }
         }
         Ok(())
     }

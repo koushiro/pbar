@@ -35,28 +35,22 @@ pub enum FormattedUnit {
 impl fmt::Display for FormattedUnit {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            FormattedUnit::Default(unit) => {
-                write!(f, "{:.*}", 0, unit)
+            FormattedUnit::Default(unit) => write!(f, "{:.*}", 0, unit),
+
+            FormattedUnit::Bytes(unit) => match unit {
+                unit if unit >= TIB => write!(f, "{:.*}TiB", 1, unit / TIB),
+                unit if unit >= GIB => write!(f, "{:.*}GiB", 1, unit / GIB),
+                unit if unit >= MIB => write!(f, "{:.*}MiB", 1, unit / MIB),
+                unit if unit >= KIB => write!(f, "{:.*}KiB", 1, unit / KIB),
+                _ => write!(f, "{:.*}B", 0, unit),
             },
 
-            FormattedUnit::Bytes(unit) => {
-                match unit {
-                    unit if unit >= TIB => write!(f, "{:.*}TiB", 1, unit / TIB),
-                    unit if unit >= GIB => write!(f, "{:.*}GiB", 1, unit / GIB),
-                    unit if unit >= MIB => write!(f, "{:.*}MiB", 1, unit / MIB),
-                    unit if unit >= KIB => write!(f, "{:.*}KiB", 1, unit / KIB),
-                    _ => write!(f, "{:.*}B", 0, unit),
-                }
-            },
-
-            FormattedUnit::BytesDec(unit) => {
-                match unit {
-                    unit if unit >= TB => write!(f, "{:.*}TB", 1, unit / TB),
-                    unit if unit >= GB => write!(f, "{:.*}GB", 1, unit / GB),
-                    unit if unit >= MB => write!(f, "{:.*}MB", 1, unit / MB),
-                    unit if unit >= KB => write!(f, "{:.*}KB", 1, unit / KB),
-                    _ => write!(f, "{:.*}B", 0, unit),
-                }
+            FormattedUnit::BytesDec(unit) => match unit {
+                unit if unit >= TB => write!(f, "{:.*}TB", 1, unit / TB),
+                unit if unit >= GB => write!(f, "{:.*}GB", 1, unit / GB),
+                unit if unit >= MB => write!(f, "{:.*}MB", 1, unit / MB),
+                unit if unit >= KB => write!(f, "{:.*}KB", 1, unit / KB),
+                _ => write!(f, "{:.*}B", 0, unit),
             },
         }
     }
@@ -89,7 +83,7 @@ impl fmt::Display for FormattedTime {
                     return write!(f, "{:02}:{:02}:{:02}", hours, mins, secs);
                 }
                 write!(f, "{:02}:{:02}", mins, secs)
-            },
+            }
 
             FormattedTime::Fmt2(d) => {
                 let (days, hours, mins, secs) = duration_to_datetime(d);
@@ -103,42 +97,42 @@ impl fmt::Display for FormattedTime {
                     return write!(f, "{:02}m{:02}s", mins, secs);
                 }
                 write!(f, "{}s", secs)
-            },
+            }
         }
     }
 }
 
 #[test]
 fn test_unit_format() {
-    let mut unit = FormattedUnit::Default(TB+256f64*GB);
+    let mut unit = FormattedUnit::Default(TB + 256f64 * GB);
     assert_eq!(String::from("1256000000000"), format!("{}", unit));
-    unit = FormattedUnit::Default(2048f64*MB);
+    unit = FormattedUnit::Default(2048f64 * MB);
     assert_eq!(String::from("2048000000"), format!("{}", unit));
-    unit = FormattedUnit::Default(2f64*MB+256f64*KB);
+    unit = FormattedUnit::Default(2f64 * MB + 256f64 * KB);
     assert_eq!(String::from("2256000"), format!("{}", unit));
-    unit = FormattedUnit::Default(2f64*KB+512f64);
+    unit = FormattedUnit::Default(2f64 * KB + 512f64);
     assert_eq!(String::from("2512"), format!("{}", unit));
     unit = FormattedUnit::Default(999f64);
     assert_eq!(String::from("999"), format!("{}", unit));
 
-    unit = FormattedUnit::Bytes(TIB+256f64*GIB);
+    unit = FormattedUnit::Bytes(TIB + 256f64 * GIB);
     assert_eq!(String::from("1.2TiB"), format!("{}", unit));
-    unit = FormattedUnit::Bytes(2048f64*MIB);
+    unit = FormattedUnit::Bytes(2048f64 * MIB);
     assert_eq!(String::from("2.0GiB"), format!("{}", unit));
-    unit = FormattedUnit::Bytes(2f64*MIB+256f64*KB);
+    unit = FormattedUnit::Bytes(2f64 * MIB + 256f64 * KB);
     assert_eq!(String::from("2.2MiB"), format!("{}", unit));
-    unit = FormattedUnit::Bytes(2f64*KIB+512f64);
+    unit = FormattedUnit::Bytes(2f64 * KIB + 512f64);
     assert_eq!(String::from("2.5KiB"), format!("{}", unit));
     unit = FormattedUnit::Bytes(999f64);
     assert_eq!(String::from("999B"), format!("{}", unit));
 
-    unit = FormattedUnit::BytesDec(TB+256f64*GB);
+    unit = FormattedUnit::BytesDec(TB + 256f64 * GB);
     assert_eq!(String::from("1.3TB"), format!("{}", unit));
-    unit = FormattedUnit::BytesDec(2048f64*MB);
+    unit = FormattedUnit::BytesDec(2048f64 * MB);
     assert_eq!(String::from("2.0GB"), format!("{}", unit));
-    unit = FormattedUnit::BytesDec(2f64*MB+256f64*KB);
+    unit = FormattedUnit::BytesDec(2f64 * MB + 256f64 * KB);
     assert_eq!(String::from("2.3MB"), format!("{}", unit));
-    unit = FormattedUnit::BytesDec(2f64*KB+512f64);
+    unit = FormattedUnit::BytesDec(2f64 * KB + 512f64);
     assert_eq!(String::from("2.5KB"), format!("{}", unit));
     unit = FormattedUnit::BytesDec(999f64);
     assert_eq!(String::from("999B"), format!("{}", unit));

@@ -1,11 +1,11 @@
-extern crate pbar;
 extern crate chrono;
+extern crate pbar;
 
-use pbar::{ProgressBar, ProgressBarStyle};
 use chrono::prelude::*;
+use pbar::{ProgressBar, ProgressBarStyle};
 
 fn leap_or_normal(year: u32) -> u16 {
-    if (year%4 == 0 && year%100 != 0) || year%400 == 0 {
+    if (year % 4 == 0 && year % 100 != 0) || year % 400 == 0 {
         366
     } else {
         365
@@ -18,7 +18,8 @@ fn main() {
     let mut pbar = ProgressBar::stdout(days as u64);
 
     let mut style = ProgressBarStyle::customizable();
-    style.counter(None, None)
+    style
+        .counter(None, None)
         .percent()
         .bar("|██░|", Some(40));
 

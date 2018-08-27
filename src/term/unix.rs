@@ -20,9 +20,7 @@ pub fn is_term(term: &Term) -> bool {
 
 pub fn terminal_size(term: &Term) -> Option<(usize, usize)> {
     match get_win_size(term.as_raw_fd()) {
-        Some((_, winsz)) => Some(
-            (winsz.ws_col as usize, winsz.ws_row as usize)
-        ),
+        Some((_, winsz)) => Some((winsz.ws_col as usize, winsz.ws_row as usize)),
         None => None,
     }
 }
@@ -37,7 +35,11 @@ pub fn move_cursor_down(term: &Term, n: usize) -> io::Result<()> {
 
 fn is_a_tty(fd: RawFd) -> bool {
     unsafe {
-        if libc::isatty(fd) == 1 { true } else { false }
+        if libc::isatty(fd) == 1 {
+            true
+        } else {
+            false
+        }
     }
 }
 
@@ -69,9 +71,9 @@ fn test_terminal_size() {
             assert!(w > 0);
             assert!(h > 0);
             println!("message: width = {}, height = {}.", w, h);
-        },
+        }
         None => {
             println!("message: terminal_size invalid.");
-        },
+        }
     }
 }
