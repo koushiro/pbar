@@ -21,7 +21,7 @@ fn main() {
     style
         .counter(None, None)
         .percent()
-        .bar("|██░|", Some(40));
+        .bar(" ██░ ", Some(30));
 
     pbar.set_title(&format!("{} year progress:", dt.year())[..])
         .set_style(style);

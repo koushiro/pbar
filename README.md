@@ -31,7 +31,7 @@ use std::time::Duration;
 use pbar::ProgressBar;
 
 fn main() {
-    let count = 10000;
+    let count = 1000;
     let mut pbar = ProgressBar::stdout(count);
     pbar.set_title("Simple:");
     for _ in 0..count {
@@ -42,7 +42,7 @@ fn main() {
 }
 ```
 
-![](screenshots/simple.png)
+![](screenshots/simple.gif)
 
 2. Multiple Progress Bar:
 
@@ -100,7 +100,7 @@ fn main() {
 }
 ```
 
-![](screenshots/multiple.png)
+![](screenshots/multiple.gif)
 
 3. Customizable Progress Bar:
 
@@ -131,7 +131,7 @@ fn main() {
     let mut style = ProgressBarStyle::customizable();
     style.counter(None, None)
          .percent()
-         .bar("|██░|", Some(40));
+         .bar(" ██░ ", Some(40));
 
     pbar.set_title(&format!("{} year progress:", dt.year())[..])
         .set_style(style);
@@ -139,7 +139,7 @@ fn main() {
 }
 ```
 
-![](screenshots/year_progress.png)
+![](screenshots/year_progress.gif)
 
 ### Customization
 

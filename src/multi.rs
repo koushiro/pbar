@@ -48,7 +48,7 @@ impl MultiProgressBar {
 
     pub fn join_with_msg(&mut self, msg: &str) -> io::Result<()> {
         self.listen().unwrap();
-        self.target.draw(msg.to_string())
+        self.target.draw(msg)
     }
 
     fn listen(&mut self) -> io::Result<()> {
@@ -65,11 +65,11 @@ impl MultiProgressBar {
             }
 
             let mut out = String::new();
-            for bar in self.bars.iter() {
+            for bar in &self.bars {
                 out.push_str(&format!("\r{}\n", bar));
             }
 
-            self.target.draw(out).unwrap();
+            self.target.draw(&out).unwrap();
 
             if info.done {
                 self.nbars -= 1;

@@ -52,30 +52,15 @@ impl ProgressBarTarget {
     }
 
     pub fn move_cursor_up(&self, n: usize) {
-        match self.kind {
-            ProgressBarTargetKind::Term(ref term) => {
-                term.move_cursor_up(n).unwrap();
-            }
-            _ => {}
-        }
-    }
-
-    pub fn move_cursor_down(&self, n: usize) {
-        match self.kind {
-            ProgressBarTargetKind::Term(ref term) => {
-                term.move_cursor_down(n).unwrap();
-            }
-            _ => {}
+        if let ProgressBarTargetKind::Term(ref term) = self.kind {
+            term.move_cursor_up(n).unwrap();
         }
     }
 
     /// Special for MultiProgressBar.
-    pub fn draw(&self, line: String) -> io::Result<()> {
-        match self.kind {
-            ProgressBarTargetKind::Term(ref term) => {
-                term.write_target(line.as_bytes()).unwrap();
-            }
-            _ => {}
+    pub fn draw(&self, line: &str) -> io::Result<()> {
+        if let ProgressBarTargetKind::Term(ref term) = self.kind {
+            term.write_target(line.as_bytes()).unwrap();
         }
         Ok(())
     }
@@ -107,11 +92,7 @@ struct ProgressBarContext {
 
 impl ProgressBarContext {
     pub fn is_finish(&self) -> bool {
-        if self.current < self.total {
-            false
-        } else {
-            true
-        }
+        self.current >= self.total
     }
 
     pub fn current(&self) -> (u64, u64) {
@@ -119,12 +100,11 @@ impl ProgressBarContext {
     }
 
     pub fn percent(&self) -> f64 {
-        let p = match (self.current, self.total) {
+        match (self.current, self.total) {
             (_, 0) => 1.0,
             (0, _) => 0.0,
             (current, total) => current as f64 / total as f64,
-        };
-        p
+        }
     }
 
     pub fn speed(&self) -> f64 {
@@ -360,7 +340,7 @@ impl ProgressBar {
         }
     }
 
-    fn fmt_bar(&self, symbols: &Vec<char>, bar_width: usize) -> String {
+    fn fmt_bar(&self, symbols: &[char], bar_width: usize) -> String {
         let percent = self.ctxt.percent();
         let begin_part = symbols[0].to_string();
         let fill_len = (percent * bar_width as f64) as usize;

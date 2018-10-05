@@ -6,8 +6,10 @@ use winapi::um::{
     processenv::GetStdHandle,
     winbase::{STD_ERROR_HANDLE, STD_OUTPUT_HANDLE},
     wincon::{
-        GetConsoleScreenBufferInfo, SetConsoleCursorPosition, CONSOLE_SCREEN_BUFFER_INFO, COORD,
-        SMALL_RECT,
+        GetConsoleScreenBufferInfo,
+        SetConsoleCursorPosition,
+        CONSOLE_SCREEN_BUFFER_INFO,
+        COORD, SMALL_RECT,
     },
     winnt::HANDLE,
 };
@@ -23,12 +25,12 @@ impl AsRawHandle for Term {
     }
 }
 
-pub fn is_term(term: &Term) -> bool {
-    match get_console_mode(term.as_raw_handle()) {
-        Some(_) => true,
-        None => false,
-    }
-}
+//pub fn is_term(term: &Term) -> bool {
+//    match get_console_mode(term.as_raw_handle()) {
+//        Some(_) => true,
+//        None => false,
+//    }
+//}
 
 pub fn terminal_size(term: &Term) -> Option<(usize, usize)> {
     match get_console_screen_buffer_info(term.as_raw_handle()) {
@@ -59,24 +61,24 @@ pub fn move_cursor_up(term: &Term, n: usize) -> io::Result<()> {
     }
 }
 
-pub fn move_cursor_down(term: &Term, n: usize) -> io::Result<()> {
-    match get_console_screen_buffer_info(term.as_raw_handle()) {
-        Some((handle, csbi)) => {
-            let set_result = set_console_cursor_pos(handle, 0, csbi.dwCursorPosition.Y + n as i16);
-            match set_result {
-                true => Ok(()),
-                false => Err(io::Error::new(
-                    io::ErrorKind::Other,
-                    "SetConsoleCursorPosition invalid.",
-                )),
-            }
-        }
-        None => Err(io::Error::new(
-            io::ErrorKind::Other,
-            "GetConsoleScreenBufferInfo invalid.",
-        )),
-    }
-}
+//pub fn move_cursor_down(term: &Term, n: usize) -> io::Result<()> {
+//    match get_console_screen_buffer_info(term.as_raw_handle()) {
+//        Some((handle, csbi)) => {
+//            let set_result = set_console_cursor_pos(handle, 0, csbi.dwCursorPosition.Y + n as i16);
+//            match set_result {
+//                true => Ok(()),
+//                false => Err(io::Error::new(
+//                    io::ErrorKind::Other,
+//                    "SetConsoleCursorPosition invalid.",
+//                )),
+//            }
+//        }
+//        None => Err(io::Error::new(
+//            io::ErrorKind::Other,
+//            "GetConsoleScreenBufferInfo invalid.",
+//        )),
+//    }
+//}
 
 fn get_console_mode(handle: RawHandle) -> Option<u32> {
     unsafe {
@@ -122,75 +124,80 @@ fn set_console_cursor_pos(handle: RawHandle, x: i16, y: i16) -> bool {
     }
 }
 
-#[test]
-fn test_is_term() {
-    let term = Term::stdout();
-    assert_eq!(is_term(&term), true);
-}
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-#[test]
-fn test_terminal_size() {
-    let term = Term::stdout();
-    match terminal_size(&term) {
-        Some((w, h)) => {
-            assert!(w > 0);
-            assert!(h > 0);
-            println!("message: width = {}, height = {}.", w, h);
-        }
-        None => {
-            println!("message: terminal_size invalid.");
+    //    #[test]
+    //    fn test_is_term() {
+    //        let term = Term::stdout();
+    //        assert_eq!(is_term(&term), true);
+    //    }
+
+    #[test]
+    fn test_terminal_size() {
+        let term = Term::stdout();
+        match terminal_size(&term) {
+            Some((w, h)) => {
+                assert!(w > 0);
+                assert!(h > 0);
+                println!("message: width = {}, height = {}.", w, h);
+            }
+            None => {
+                println!("message: terminal_size invalid.");
+            }
         }
     }
-}
 
-#[test]
-fn test_move_cursor_up() {
-    let term = Term::stdout();
+    #[test]
+    fn test_move_cursor_up() {
+        let term = Term::stdout();
 
-    let offset = 5i16;
-    let mut old_cursor = 0;
-    match get_console_screen_buffer_info(term.as_raw_handle() as HANDLE) {
-        Some((_, csbi)) => {
-            old_cursor = csbi.dwCursorPosition.Y;
+        let offset = 5i16;
+        let mut old_cursor = 0;
+        match get_console_screen_buffer_info(term.as_raw_handle() as HANDLE) {
+            Some((_, csbi)) => {
+                old_cursor = csbi.dwCursorPosition.Y;
+            }
+            None => {}
         }
-        None => {}
+
+        move_cursor_up(&term, offset as usize);
+
+        let mut new_cursor = 0;
+        match get_console_screen_buffer_info(term.as_raw_handle() as HANDLE) {
+            Some((_, csbi)) => {
+                new_cursor = csbi.dwCursorPosition.Y;
+            }
+            None => {}
+        }
+
+        assert_eq!(new_cursor, old_cursor - offset);
     }
 
-    move_cursor_up(&term, offset as usize);
-
-    let mut new_cursor = 0;
-    match get_console_screen_buffer_info(term.as_raw_handle() as HANDLE) {
-        Some((_, csbi)) => {
-            new_cursor = csbi.dwCursorPosition.Y;
-        }
-        None => {}
-    }
-
-    assert_eq!(new_cursor, old_cursor - offset);
-}
-
-#[test]
-fn test_move_cursor_down() {
-    let term = Term::stdout();
-
-    let offset = 5i16;
-    let mut old_cursor = 0;
-    match get_console_screen_buffer_info(term.as_raw_handle() as HANDLE) {
-        Some((_, csbi)) => {
-            old_cursor = csbi.dwCursorPosition.Y;
-        }
-        None => {}
-    }
-
-    move_cursor_down(&term, offset as usize);
-
-    let mut new_cursor = 0;
-    match get_console_screen_buffer_info(term.as_raw_handle() as HANDLE) {
-        Some((_, csbi)) => {
-            new_cursor = csbi.dwCursorPosition.Y;
-        }
-        None => {}
-    }
-
-    assert_eq!(new_cursor, old_cursor + offset);
+    //    #[test]
+    //    fn test_move_cursor_down() {
+    //        let term = Term::stdout();
+    //
+    //        let offset = 5i16;
+    //        let mut old_cursor = 0;
+    //        match get_console_screen_buffer_info(term.as_raw_handle() as HANDLE) {
+    //            Some((_, csbi)) => {
+    //                old_cursor = csbi.dwCursorPosition.Y;
+    //            }
+    //            None => {}
+    //        }
+    //
+    //        move_cursor_down(&term, offset as usize);
+    //
+    //        let mut new_cursor = 0;
+    //        match get_console_screen_buffer_info(term.as_raw_handle() as HANDLE) {
+    //            Some((_, csbi)) => {
+    //                new_cursor = csbi.dwCursorPosition.Y;
+    //            }
+    //            None => {}
+    //        }
+    //
+    //        assert_eq!(new_cursor, old_cursor + offset);
+    //    }
 }

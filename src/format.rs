@@ -102,59 +102,64 @@ impl fmt::Display for FormattedTime {
     }
 }
 
-#[test]
-fn test_unit_format() {
-    let mut unit = FormattedUnit::Default(TB + 256f64 * GB);
-    assert_eq!(String::from("1256000000000"), format!("{}", unit));
-    unit = FormattedUnit::Default(2048f64 * MB);
-    assert_eq!(String::from("2048000000"), format!("{}", unit));
-    unit = FormattedUnit::Default(2f64 * MB + 256f64 * KB);
-    assert_eq!(String::from("2256000"), format!("{}", unit));
-    unit = FormattedUnit::Default(2f64 * KB + 512f64);
-    assert_eq!(String::from("2512"), format!("{}", unit));
-    unit = FormattedUnit::Default(999f64);
-    assert_eq!(String::from("999"), format!("{}", unit));
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-    unit = FormattedUnit::Bytes(TIB + 256f64 * GIB);
-    assert_eq!(String::from("1.2TiB"), format!("{}", unit));
-    unit = FormattedUnit::Bytes(2048f64 * MIB);
-    assert_eq!(String::from("2.0GiB"), format!("{}", unit));
-    unit = FormattedUnit::Bytes(2f64 * MIB + 256f64 * KB);
-    assert_eq!(String::from("2.2MiB"), format!("{}", unit));
-    unit = FormattedUnit::Bytes(2f64 * KIB + 512f64);
-    assert_eq!(String::from("2.5KiB"), format!("{}", unit));
-    unit = FormattedUnit::Bytes(999f64);
-    assert_eq!(String::from("999B"), format!("{}", unit));
+    #[test]
+    fn test_unit_format() {
+        let mut unit = FormattedUnit::Default(TB + 256f64 * GB);
+        assert_eq!(String::from("1256000000000"), format!("{}", unit));
+        unit = FormattedUnit::Default(2048f64 * MB);
+        assert_eq!(String::from("2048000000"), format!("{}", unit));
+        unit = FormattedUnit::Default(2f64 * MB + 256f64 * KB);
+        assert_eq!(String::from("2256000"), format!("{}", unit));
+        unit = FormattedUnit::Default(2f64 * KB + 512f64);
+        assert_eq!(String::from("2512"), format!("{}", unit));
+        unit = FormattedUnit::Default(999f64);
+        assert_eq!(String::from("999"), format!("{}", unit));
 
-    unit = FormattedUnit::BytesDec(TB + 256f64 * GB);
-    assert_eq!(String::from("1.3TB"), format!("{}", unit));
-    unit = FormattedUnit::BytesDec(2048f64 * MB);
-    assert_eq!(String::from("2.0GB"), format!("{}", unit));
-    unit = FormattedUnit::BytesDec(2f64 * MB + 256f64 * KB);
-    assert_eq!(String::from("2.3MB"), format!("{}", unit));
-    unit = FormattedUnit::BytesDec(2f64 * KB + 512f64);
-    assert_eq!(String::from("2.5KB"), format!("{}", unit));
-    unit = FormattedUnit::BytesDec(999f64);
-    assert_eq!(String::from("999B"), format!("{}", unit));
-}
+        unit = FormattedUnit::Bytes(TIB + 256f64 * GIB);
+        assert_eq!(String::from("1.2TiB"), format!("{}", unit));
+        unit = FormattedUnit::Bytes(2048f64 * MIB);
+        assert_eq!(String::from("2.0GiB"), format!("{}", unit));
+        unit = FormattedUnit::Bytes(2f64 * MIB + 256f64 * KB);
+        assert_eq!(String::from("2.2MiB"), format!("{}", unit));
+        unit = FormattedUnit::Bytes(2f64 * KIB + 512f64);
+        assert_eq!(String::from("2.5KiB"), format!("{}", unit));
+        unit = FormattedUnit::Bytes(999f64);
+        assert_eq!(String::from("999B"), format!("{}", unit));
 
-#[test]
-fn test_time_format() {
-    let mut time = FormattedTime::Fmt1(Duration::new(30, 0));
-    assert_eq!(String::from("00:30"), format!("{}", time));
-    time = FormattedTime::Fmt1(Duration::new(90, 0));
-    assert_eq!(String::from("01:30"), format!("{}", time));
-    time = FormattedTime::Fmt1(Duration::new(3690, 0));
-    assert_eq!(String::from("01:01:30"), format!("{}", time));
-    time = FormattedTime::Fmt1(Duration::new(90090, 0));
-    assert_eq!(String::from("1d:01:01:30"), format!("{}", time));
+        unit = FormattedUnit::BytesDec(TB + 256f64 * GB);
+        assert_eq!(String::from("1.3TB"), format!("{}", unit));
+        unit = FormattedUnit::BytesDec(2048f64 * MB);
+        assert_eq!(String::from("2.0GB"), format!("{}", unit));
+        unit = FormattedUnit::BytesDec(2f64 * MB + 256f64 * KB);
+        assert_eq!(String::from("2.3MB"), format!("{}", unit));
+        unit = FormattedUnit::BytesDec(2f64 * KB + 512f64);
+        assert_eq!(String::from("2.5KB"), format!("{}", unit));
+        unit = FormattedUnit::BytesDec(999f64);
+        assert_eq!(String::from("999B"), format!("{}", unit));
+    }
 
-    time = FormattedTime::Fmt2(Duration::new(30, 0));
-    assert_eq!(String::from("30s"), format!("{}", time));
-    time = FormattedTime::Fmt2(Duration::new(90, 0));
-    assert_eq!(String::from("01m30s"), format!("{}", time));
-    time = FormattedTime::Fmt2(Duration::new(3690, 0));
-    assert_eq!(String::from("01h01m30s"), format!("{}", time));
-    time = FormattedTime::Fmt2(Duration::new(90090, 0));
-    assert_eq!(String::from("1d01h01m30s"), format!("{}", time));
+    #[test]
+    fn test_time_format() {
+        let mut time = FormattedTime::Fmt1(Duration::new(30, 0));
+        assert_eq!(String::from("00:30"), format!("{}", time));
+        time = FormattedTime::Fmt1(Duration::new(90, 0));
+        assert_eq!(String::from("01:30"), format!("{}", time));
+        time = FormattedTime::Fmt1(Duration::new(3690, 0));
+        assert_eq!(String::from("01:01:30"), format!("{}", time));
+        time = FormattedTime::Fmt1(Duration::new(90090, 0));
+        assert_eq!(String::from("1d:01:01:30"), format!("{}", time));
+
+        time = FormattedTime::Fmt2(Duration::new(30, 0));
+        assert_eq!(String::from("30s"), format!("{}", time));
+        time = FormattedTime::Fmt2(Duration::new(90, 0));
+        assert_eq!(String::from("01m30s"), format!("{}", time));
+        time = FormattedTime::Fmt2(Duration::new(3690, 0));
+        assert_eq!(String::from("01h01m30s"), format!("{}", time));
+        time = FormattedTime::Fmt2(Duration::new(90090, 0));
+        assert_eq!(String::from("1d01h01m30s"), format!("{}", time));
+    }
 }

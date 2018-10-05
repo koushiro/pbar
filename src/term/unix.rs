@@ -14,9 +14,9 @@ impl AsRawFd for Term {
     }
 }
 
-pub fn is_term(term: &Term) -> bool {
-    is_a_tty(term.as_raw_fd())
-}
+//pub fn is_term(term: &Term) -> bool {
+//    is_a_tty(term.as_raw_fd())
+//}
 
 pub fn terminal_size(term: &Term) -> Option<(usize, usize)> {
     match get_win_size(term.as_raw_fd()) {
@@ -29,19 +29,19 @@ pub fn move_cursor_up(term: &Term, n: usize) -> io::Result<()> {
     term.write_target(format!("\x1b[{}A", n).as_bytes())
 }
 
-pub fn move_cursor_down(term: &Term, n: usize) -> io::Result<()> {
-    term.write_target(format!("\x1b[{}B", n).as_bytes())
-}
+//pub fn move_cursor_down(term: &Term, n: usize) -> io::Result<()> {
+//    term.write_target(format!("\x1b[{}B", n).as_bytes())
+//}
 
-fn is_a_tty(fd: RawFd) -> bool {
-    unsafe {
-        if libc::isatty(fd) == 1 {
-            true
-        } else {
-            false
-        }
-    }
-}
+//fn is_a_tty(fd: RawFd) -> bool {
+//    unsafe {
+//        if libc::isatty(fd) == 1 {
+//            true
+//        } else {
+//            false
+//        }
+//    }
+//}
 
 fn get_win_size(handle: RawFd) -> Option<(RawFd, libc::winsize)> {
     let mut winsz = libc::winsize {
@@ -57,23 +57,27 @@ fn get_win_size(handle: RawFd) -> Option<(RawFd, libc::winsize)> {
     }
 }
 
-#[test]
-fn test_is_term() {
-    let term = Term::stdout();
-    assert_eq!(is_term(&term), true);
-}
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-#[test]
-fn test_terminal_size() {
-    let term = Term::stdout();
-    match terminal_size(&term) {
-        Some((w, h)) => {
-            assert!(w > 0);
-            assert!(h > 0);
-            println!("message: width = {}, height = {}.", w, h);
-        }
-        None => {
-            println!("message: terminal_size invalid.");
+    //    #[test]
+    //fn test_is_term() {
+    //    let term = Term::stdout();
+    //    assert_eq!(is_term(&term), true);
+    //}
+    #[test]
+    fn test_terminal_size() {
+        let term = Term::stdout();
+        match terminal_size(&term) {
+            Some((w, h)) => {
+                assert!(w > 0);
+                assert!(h > 0);
+                println!("message: width = {}, height = {}.", w, h);
+            }
+            None => {
+                println!("message: terminal_size invalid.");
+            }
         }
     }
 }

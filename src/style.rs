@@ -40,7 +40,7 @@ impl ProgressBarStyle {
     /// default delimiter is '/'; default format is pure number.
     pub fn counter(&mut self, delimiter: Option<String>, fmt: Option<UnitFormat>) -> &mut Self {
         self.layout.push(Component::Counter(
-            delimiter.unwrap_or("/".to_string()),
+            delimiter.unwrap_or_else(|| "/".to_string()),
             fmt.unwrap_or(UnitFormat::Default),
         ));
         self

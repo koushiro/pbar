@@ -35,9 +35,9 @@ impl Term {
         }
     }
 
-    pub fn is_term(&self) -> bool {
-        is_term(self)
-    }
+    //    pub fn is_term(&self) -> bool {
+    //        is_term(self)
+    //    }
 
     pub fn terminal_size(&self) -> (usize, usize) {
         terminal_size(self).unwrap_or((TERM_DEFAULT_WIDTH, TERM_DEFAULT_HEIGHT))
@@ -47,9 +47,9 @@ impl Term {
         move_cursor_up(self, n)
     }
 
-    pub fn move_cursor_down(&self, n: usize) -> io::Result<()> {
-        move_cursor_down(self, n)
-    }
+    //    pub fn move_cursor_down(&self, n: usize) -> io::Result<()> {
+    //        move_cursor_down(self, n)
+    //    }
 
     pub fn write_target(&self, bytes: &[u8]) -> io::Result<()> {
         match self.kind {
