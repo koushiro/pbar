@@ -161,7 +161,7 @@ fn main() {
     style.counter(None, None)       /// progress like 1234 / 10000
          .speed(None)               /// speed with format
          .percent()                 /// progress percent
-         .bar("|██░|", Some(40))    /// bar symbols(begin/fill/current/empty/end), bar width(default 30)
+         .bar(" ██░ ", Some(40))    /// bar symbols(begin/fill/current/empty/end), bar width(default 30)
          .time_left(None)           /// left time with format
          .str("/")                  /// just string, like delimiter string
          .time_elapsed(None)        /// elapsed time with format
