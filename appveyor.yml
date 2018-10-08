@@ -40,9 +40,9 @@ install:
 build: false
 
 test_script:
-  - cargo test --target %TARGET% &&
-  - cargo run --target %TARGET% --example simple &&
-  - cargo run --target %TARGET% --example multiple &&
+  - cargo test --target %TARGET%
+  - cargo run --target %TARGET% --example simple
+  - cargo run --target %TARGET% --example multiple
   - cargo run --target %TARGET% --example year_progress
 
 cache:
