@@ -1,7 +1,7 @@
 use std::io;
 use std::sync::mpsc;
 
-use bar::*;
+use crate::bar::*;
 
 pub struct MultiProgressBar {
     target: ProgressBarTarget,

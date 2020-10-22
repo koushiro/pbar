@@ -8,10 +8,7 @@
 [license-svg]: https://img.shields.io/github/license/koushiro/pbar?style=flat-square
 [license-url]: https://github.com/koushiro/pbar/blob/master/LICENSE
 
-This is a terminal progress bar library written in Rust,
-inspired by [indicatif](https://github.com/mitsuhiko/indicatif),
-[pb-rustlang](https://github.com/a8m/pb) and [pb-golang](https://github.com/cheggaaa/pb),
-tested on Archlinux and Windows 10.
+This is a terminal progress bar library written in Rust.
 
 ## Usage
 
@@ -184,6 +181,11 @@ fn main() {
 - [ ] add customizable spinner component
 - [ ] add terminal color and attribute or use other crate instead of my term implement.
 - [ ] more practical examples
+
+### Alternatives
+
+- [indicatif](https://github.com/mitsuhiko/indicatif)
+- [pb](https://github.com/a8m/pb)
 
 ## License
 

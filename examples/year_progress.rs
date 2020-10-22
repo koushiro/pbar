@@ -1,6 +1,3 @@
-extern crate chrono;
-extern crate pbar;
-
 use chrono::prelude::*;
 use pbar::{ProgressBar, ProgressBarStyle};
 

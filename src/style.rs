@@ -1,4 +1,4 @@
-use format::*;
+use crate::format::*;
 
 #[derive(Clone)]
 pub enum Component {

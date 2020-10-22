@@ -1,9 +1,7 @@
 use std::io;
 use std::os::unix::io::{AsRawFd, RawFd};
 
-use libc;
-
-use term::{Term, TermTargetKind};
+use crate::term::{Term, TermTargetKind};
 
 impl AsRawFd for Term {
     fn as_raw_fd(&self) -> RawFd {
@@ -14,9 +12,9 @@ impl AsRawFd for Term {
     }
 }
 
-//pub fn is_term(term: &Term) -> bool {
-//    is_a_tty(term.as_raw_fd())
-//}
+pub fn is_term(term: &Term) -> bool {
+    is_a_tty(term.as_raw_fd())
+}
 
 pub fn terminal_size(term: &Term) -> Option<(usize, usize)> {
     match get_win_size(term.as_raw_fd()) {
@@ -29,19 +27,13 @@ pub fn move_cursor_up(term: &Term, n: usize) -> io::Result<()> {
     term.write_target(format!("\x1b[{}A", n).as_bytes())
 }
 
-//pub fn move_cursor_down(term: &Term, n: usize) -> io::Result<()> {
-//    term.write_target(format!("\x1b[{}B", n).as_bytes())
-//}
+pub fn move_cursor_down(term: &Term, n: usize) -> io::Result<()> {
+    term.write_target(format!("\x1b[{}B", n).as_bytes())
+}
 
-//fn is_a_tty(fd: RawFd) -> bool {
-//    unsafe {
-//        if libc::isatty(fd) == 1 {
-//            true
-//        } else {
-//            false
-//        }
-//    }
-//}
+fn is_a_tty(fd: RawFd) -> bool {
+    unsafe { libc::isatty(fd) == 1 }
+}
 
 fn get_win_size(handle: RawFd) -> Option<(RawFd, libc::winsize)> {
     let mut winsz = libc::winsize {
@@ -61,11 +53,12 @@ fn get_win_size(handle: RawFd) -> Option<(RawFd, libc::winsize)> {
 mod tests {
     use super::*;
 
-    //    #[test]
-    //fn test_is_term() {
-    //    let term = Term::stdout();
-    //    assert_eq!(is_term(&term), true);
-    //}
+    #[test]
+    fn test_is_term() {
+        let term = Term::stdout();
+        assert_eq!(is_term(&term), true);
+    }
+
     #[test]
     fn test_terminal_size() {
         let term = Term::stdout();

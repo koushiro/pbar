@@ -1,14 +1,15 @@
 use std::io::{self, Write};
 
+// FIXME
 #[cfg(windows)]
 mod windows;
 #[cfg(windows)]
-use self::windows::*;
+pub use self::windows::*;
 
 #[cfg(unix)]
 mod unix;
 #[cfg(unix)]
-use self::unix::*;
+pub use self::unix::*;
 
 const TERM_DEFAULT_WIDTH: usize = 79;
 const TERM_DEFAULT_HEIGHT: usize = 5;
@@ -35,9 +36,9 @@ impl Term {
         }
     }
 
-    //    pub fn is_term(&self) -> bool {
-    //        is_term(self)
-    //    }
+    pub fn is_term(&self) -> bool {
+        is_term(self)
+    }
 
     pub fn terminal_size(&self) -> (usize, usize) {
         terminal_size(self).unwrap_or((TERM_DEFAULT_WIDTH, TERM_DEFAULT_HEIGHT))
@@ -47,9 +48,9 @@ impl Term {
         move_cursor_up(self, n)
     }
 
-    //    pub fn move_cursor_down(&self, n: usize) -> io::Result<()> {
-    //        move_cursor_down(self, n)
-    //    }
+    pub fn move_cursor_down(&self, n: usize) -> io::Result<()> {
+        move_cursor_down(self, n)
+    }
 
     pub fn write_target(&self, bytes: &[u8]) -> io::Result<()> {
         match self.kind {

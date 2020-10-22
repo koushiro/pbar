@@ -3,10 +3,10 @@ use std::iter::repeat;
 use std::sync::mpsc;
 use std::time::{Duration, Instant};
 
-use format::*;
-use style::*;
-use term::*;
-use util::*;
+use crate::format::*;
+use crate::style::*;
+use crate::term::*;
+use crate::util::*;
 
 pub struct ProgressBarDrawInfo {
     pub line: String,

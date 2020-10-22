@@ -2,24 +2,26 @@
 name = "pbar"
 version = "0.1.0"
 authors = ["koushiro <https://github.com/koushiro>"]
+edition = "2018"
+
 description = "A terminal progress bar library for rust."
-#documentation = "http://doc.rust-lang.org/pbar"
 homepage = "https://github.com/koushiro/pbar"
 repository = "https://github.com/koushiro/pbar"
-readme = "README.md"
 keywords = ["terminal", "progress", "bar", "cli"]
 categories = ["command-line-interface", "command-line-utilities"]
+
+readme = "README.md"
 license = "MIT"
 publish = false
 
-[dependencies]
+[target.'cfg(unix)'.dependencies]
 libc = "0.2"
-
-[dev-dependencies]
-chrono = "0.4"
 
 [target.'cfg(windows)'.dependencies]
 winapi = { version = "0.3", features = ["consoleapi", "processenv","winbase",  "wincon", "winnt"] }
+
+[dev-dependencies]
+chrono = "0.4"
 
 [[example]]
 name = "simple"
