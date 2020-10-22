@@ -153,21 +153,15 @@ mod tests {
 
         let offset = 5i16;
         let mut old_cursor = 0;
-        match get_console_screen_buffer_info(term.as_raw_handle() as HANDLE) {
-            Some((_, csbi)) => {
-                old_cursor = csbi.dwCursorPosition.Y;
-            }
-            None => {}
+        if let Some((_, csbi)) = get_console_screen_buffer_info(term.as_raw_handle() as HANDLE) {
+            old_cursor = csbi.dwCursorPosition.Y;
         }
 
-        move_cursor_up(&term, offset as usize);
+        move_cursor_up(&term, offset as usize).unwrap();
 
         let mut new_cursor = 0;
-        match get_console_screen_buffer_info(term.as_raw_handle() as HANDLE) {
-            Some((_, csbi)) => {
-                new_cursor = csbi.dwCursorPosition.Y;
-            }
-            None => {}
+        if let Some((_, csbi)) = get_console_screen_buffer_info(term.as_raw_handle() as HANDLE) {
+            new_cursor = csbi.dwCursorPosition.Y;
         }
 
         assert_eq!(new_cursor, old_cursor - offset);
