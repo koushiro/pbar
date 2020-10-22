@@ -78,15 +78,15 @@ pub fn move_cursor_up(term: &Term, n: usize) -> io::Result<()> {
 //    }
 //}
 
-fn get_console_mode(handle: RawHandle) -> Option<u32> {
-    unsafe {
-        let mut mode = 0;
-        match GetConsoleMode(handle as HANDLE, &mut mode) {
-            0 => None,
-            _ => Some(mode),
-        }
-    }
-}
+// fn get_console_mode(handle: RawHandle) -> Option<u32> {
+//     unsafe {
+//         let mut mode = 0;
+//         match GetConsoleMode(handle as HANDLE, &mut mode) {
+//             0 => None,
+//             _ => Some(mode),
+//         }
+//     }
+// }
 
 fn get_console_screen_buffer_info(
     handle: RawHandle,
@@ -116,10 +116,7 @@ fn get_console_screen_buffer_info(
 
 fn set_console_cursor_pos(handle: RawHandle, x: i16, y: i16) -> bool {
     let coord = COORD { X: x, Y: y };
-    match unsafe { SetConsoleCursorPosition(handle as HANDLE, coord) } {
-        0 => false,
-        _ => true,
-    }
+    !matches!(unsafe { SetConsoleCursorPosition(handle as HANDLE, coord) }, 0)
 }
 
 #[cfg(test)]
