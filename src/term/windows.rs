@@ -2,7 +2,7 @@ use std::io;
 use std::os::windows::io::{AsRawHandle, RawHandle};
 
 use winapi::um::{
-    consoleapi::GetConsoleMode,
+    // consoleapi::GetConsoleMode,
     processenv::GetStdHandle,
     winbase::{STD_ERROR_HANDLE, STD_OUTPUT_HANDLE},
     wincon::{
