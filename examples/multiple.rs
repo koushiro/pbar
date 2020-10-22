@@ -31,7 +31,7 @@ fn main() {
     });
 
     let mut bar3 = multibars.attach(count);
-    bar3.set_title("item #3:").set_style(style.clone());
+    bar3.set_title("item #3:").set_style(style);
     let _ = thread::spawn(move || {
         for _ in 0..count {
             bar3.increase();
