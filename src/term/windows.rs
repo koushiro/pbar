@@ -116,7 +116,10 @@ fn get_console_screen_buffer_info(
 
 fn set_console_cursor_pos(handle: RawHandle, x: i16, y: i16) -> bool {
     let coord = COORD { X: x, Y: y };
-    !matches!(unsafe { SetConsoleCursorPosition(handle as HANDLE, coord) }, 0)
+    !matches!(
+        unsafe { SetConsoleCursorPosition(handle as HANDLE, coord) },
+        0
+    )
 }
 
 #[cfg(test)]
