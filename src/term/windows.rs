@@ -6,10 +6,8 @@ use winapi::um::{
     processenv::GetStdHandle,
     winbase::{STD_ERROR_HANDLE, STD_OUTPUT_HANDLE},
     wincon::{
-        GetConsoleScreenBufferInfo,
-        SetConsoleCursorPosition,
-        CONSOLE_SCREEN_BUFFER_INFO,
-        COORD, SMALL_RECT,
+        GetConsoleScreenBufferInfo, SetConsoleCursorPosition, CONSOLE_SCREEN_BUFFER_INFO, COORD,
+        SMALL_RECT,
     },
     winnt::HANDLE,
 };
