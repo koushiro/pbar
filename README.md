@@ -28,8 +28,6 @@ cargo run --example simple
 ```
 
 ```rust
-extern crate pbar;
-
 use std::thread;
 use std::time::Duration;
 
@@ -56,8 +54,6 @@ cargo run --example multiple
 ```
 
 ```rust
-extern crate pbar;
-
 use std::thread;
 use std::time::Duration;
 
@@ -114,9 +110,6 @@ cargo run --example year_progress
 ```
 
 ```rust
-extern crate pbar;
-extern crate chrono;
-
 use pbar::{ProgressBar, ProgressBarStyle};
 use chrono::prelude::*;
 
@@ -182,7 +175,7 @@ fn main() {
 - [ ] add terminal color and attribute or use other crate instead of my term implement.
 - [ ] more practical examples
 
-### Alternatives
+## Alternatives
 
 - [indicatif](https://github.com/mitsuhiko/indicatif)
 - [pb](https://github.com/a8m/pb)
