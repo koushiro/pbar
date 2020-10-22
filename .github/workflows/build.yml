@@ -42,3 +42,9 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: test
+
+      - name: Run example year_progress
+        uses: actions-rs/cargo@v1
+        with:
+          command: run
+          args: --example year_progress
