@@ -1,8 +1,12 @@
 # pbar
 
-[![Build Status](https://travis-ci.org/koushiro/pbar.svg?branch=master)](https://travis-ci.org/koushiro/pbar)
-[![Build Status](https://ci.appveyor.com/api/projects/status/github/koushiro/pbar?branch=master&svg=true)](https://ci.appveyor.com/project/koushiro/pbar)
-[![GitHub License](https://img.shields.io/github/license/koushiro/flvparser.svg)](https://github.com/koushiro/pbar/blob/master/LICENSE)
+[![Actions Status][ga-svg]][ga-url]
+[![GitHub License][license-svg]][license-url]
+
+[ga-svg]: https://github.com/koushiro/pbar/workflows/build/badge.svg
+[ga-url]: https://github.com/koushiro/pbar/actions
+[license-svg]: https://img.shields.io/github/license/koushiro/pbar?style=flat-square
+[license-url]: https://github.com/koushiro/pbar/blob/master/LICENSE
 
 This is a terminal progress bar library written in Rust,
 inspired by [indicatif](https://github.com/mitsuhiko/indicatif),
