@@ -46,7 +46,9 @@ impl ProgressBarTarget {
 
     pub fn terminal_width(&self) -> usize {
         match self.kind {
-            ProgressBarTargetKind::Term(ref term) => term.terminal_size().0,
+            ProgressBarTargetKind::Term(ref term) => {
+                term.terminal_size().unwrap_or(TERM_DEFAULT_WINDOW).0
+            }
             _ => 0,
         }
     }

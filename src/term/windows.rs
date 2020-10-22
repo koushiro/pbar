@@ -2,7 +2,6 @@ use std::io;
 use std::os::windows::io::{AsRawHandle, RawHandle};
 
 use winapi::um::{
-    consoleapi::GetConsoleMode,
     processenv::GetStdHandle,
     winbase::{STD_ERROR_HANDLE, STD_OUTPUT_HANDLE},
     wincon::{
@@ -21,10 +20,6 @@ impl AsRawHandle for Term {
             TermTargetKind::Stderr => unsafe { GetStdHandle(STD_ERROR_HANDLE) as RawHandle },
         }
     }
-}
-
-pub fn is_term(term: &Term) -> bool {
-    get_console_mode(term.as_raw_handle()).is_some()
 }
 
 pub fn terminal_size(term: &Term) -> Option<(usize, usize)> {
@@ -75,16 +70,6 @@ pub fn move_cursor_down(term: &Term, n: usize) -> io::Result<()> {
     }
 }
 
-fn get_console_mode(handle: RawHandle) -> Option<u32> {
-    unsafe {
-        let mut mode = 0;
-        match GetConsoleMode(handle as HANDLE, &mut mode) {
-            0 => None,
-            _ => Some(mode),
-        }
-    }
-}
-
 fn get_console_screen_buffer_info(
     handle: RawHandle,
 ) -> Option<(RawHandle, CONSOLE_SCREEN_BUFFER_INFO)> {
@@ -117,76 +102,4 @@ fn set_console_cursor_pos(handle: RawHandle, x: i16, y: i16) -> bool {
         unsafe { SetConsoleCursorPosition(handle as HANDLE, coord) },
         0
     )
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_is_term() {
-        let term = Term::stdout();
-        assert_eq!(is_term(&term), true);
-    }
-
-    #[test]
-    fn test_terminal_size() {
-        let term = Term::stdout();
-        match terminal_size(&term) {
-            Some((w, h)) => {
-                assert!(w > 0);
-                assert!(h > 0);
-                println!("message: width = {}, height = {}.", w, h);
-            }
-            None => {
-                println!("message: terminal_size invalid.");
-            }
-        }
-    }
-
-    #[test]
-    fn test_move_cursor_up() {
-        let term = Term::stdout();
-
-        let offset = 5i16;
-        let mut old_cursor = 0;
-        if let Some((_, csbi)) = get_console_screen_buffer_info(term.as_raw_handle() as HANDLE) {
-            old_cursor = csbi.dwCursorPosition.Y;
-        }
-
-        move_cursor_up(&term, offset as usize).unwrap();
-
-        let mut new_cursor = 0;
-        if let Some((_, csbi)) = get_console_screen_buffer_info(term.as_raw_handle() as HANDLE) {
-            new_cursor = csbi.dwCursorPosition.Y;
-        }
-
-        assert_eq!(new_cursor, old_cursor - offset);
-    }
-
-    #[test]
-    fn test_move_cursor_down() {
-        let term = Term::stdout();
-
-        let offset = 5i16;
-        let mut old_cursor = 0;
-        match get_console_screen_buffer_info(term.as_raw_handle() as HANDLE) {
-            Some((_, csbi)) => {
-                old_cursor = csbi.dwCursorPosition.Y;
-            }
-            None => {}
-        }
-
-        move_cursor_down(&term, offset as usize).unwrap();
-
-        let mut new_cursor = 0;
-        match get_console_screen_buffer_info(term.as_raw_handle() as HANDLE) {
-            Some((_, csbi)) => {
-                new_cursor = csbi.dwCursorPosition.Y;
-            }
-            None => {}
-        }
-
-        assert_eq!(new_cursor, old_cursor + offset);
-    }
 }

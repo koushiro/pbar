@@ -4,15 +4,16 @@ use std::io::{self, Write};
 #[cfg(windows)]
 mod windows;
 #[cfg(windows)]
-pub use self::windows::*;
+use self::windows::*;
 
 #[cfg(unix)]
 mod unix;
 #[cfg(unix)]
-pub use self::unix::*;
+use self::unix::*;
 
-const TERM_DEFAULT_WIDTH: usize = 79;
-const TERM_DEFAULT_HEIGHT: usize = 5;
+pub const TERM_DEFAULT_WIDTH: usize = 79;
+pub const TERM_DEFAULT_HEIGHT: usize = 5;
+pub const TERM_DEFAULT_WINDOW: (usize, usize) = (TERM_DEFAULT_WIDTH, TERM_DEFAULT_HEIGHT);
 
 enum TermTargetKind {
     Stdout,
@@ -36,12 +37,8 @@ impl Term {
         }
     }
 
-    pub fn is_term(&self) -> bool {
-        is_term(self)
-    }
-
-    pub fn terminal_size(&self) -> (usize, usize) {
-        terminal_size(self).unwrap_or((TERM_DEFAULT_WIDTH, TERM_DEFAULT_HEIGHT))
+    pub fn terminal_size(&self) -> Option<(usize, usize)> {
+        terminal_size(self)
     }
 
     pub fn move_cursor_up(&self, n: usize) -> io::Result<()> {
@@ -65,4 +62,72 @@ impl Term {
         }
         Ok(())
     }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_terminal_size() {
+        let term = Term::stdout();
+        match term.terminal_size() {
+            Some((w, h)) => {
+                assert!(w > 0);
+                assert!(h > 0);
+                println!("message: width = {}, height = {}.", w, h);
+            }
+            None => {
+                println!("message: terminal_size invalid.");
+            }
+        }
+    }
+
+    /*
+    #[test]
+    fn test_move_cursor_up() {
+        let term = Term::stdout();
+
+        let offset = 5i16;
+        let mut old_cursor = 0;
+        if let Some((_, csbi)) = get_console_screen_buffer_info(term.as_raw_handle() as HANDLE) {
+            old_cursor = csbi.dwCursorPosition.Y;
+        }
+
+        move_cursor_up(&term, offset as usize).unwrap();
+
+        let mut new_cursor = 0;
+        if let Some((_, csbi)) = get_console_screen_buffer_info(term.as_raw_handle() as HANDLE) {
+            new_cursor = csbi.dwCursorPosition.Y;
+        }
+
+        assert_eq!(new_cursor, old_cursor - offset);
+    }
+
+    #[test]
+    fn test_move_cursor_down() {
+        let term = Term::stdout();
+
+        let offset = 5i16;
+        let mut old_cursor = 0;
+        match get_console_screen_buffer_info(term.as_raw_handle() as HANDLE) {
+            Some((_, csbi)) => {
+                old_cursor = csbi.dwCursorPosition.Y;
+            }
+            None => {}
+        }
+
+        move_cursor_down(&term, offset as usize).unwrap();
+
+        let mut new_cursor = 0;
+        match get_console_screen_buffer_info(term.as_raw_handle() as HANDLE) {
+            Some((_, csbi)) => {
+                new_cursor = csbi.dwCursorPosition.Y;
+            }
+            None => {}
+        }
+
+        assert_eq!(new_cursor, old_cursor + offset);
+    }
+    */
 }
