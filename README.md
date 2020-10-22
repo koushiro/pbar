@@ -1,9 +1,14 @@
 # pbar
 
-This is a terminal progress bar library written in Rust,
-inspired by [indicatif](https://github.com/mitsuhiko/indicatif),
-[pb-rustlang](https://github.com/a8m/pb) and [pb-golang](https://github.com/cheggaaa/pb),
-tested on Archlinux and Windows 10.
+[![Actions Status][ga-svg]][ga-url]
+[![GitHub License][license-svg]][license-url]
+
+[ga-svg]: https://github.com/koushiro/pbar/workflows/build/badge.svg
+[ga-url]: https://github.com/koushiro/pbar/actions
+[license-svg]: https://img.shields.io/github/license/koushiro/pbar?style=flat-square
+[license-url]: https://github.com/koushiro/pbar/blob/master/LICENSE
+
+This is a terminal progress bar library written in Rust.
 
 ## Usage
 
@@ -177,6 +182,11 @@ fn main() {
 - [ ] add terminal color and attribute or use other crate instead of my term implement.
 - [ ] more practical examples
 
+### Alternatives
+
+- [indicatif](https://github.com/mitsuhiko/indicatif)
+- [pb](https://github.com/a8m/pb)
+
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](./LICENSE) file for details
+[MIT](./LICENSE)

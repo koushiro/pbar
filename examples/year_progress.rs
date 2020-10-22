@@ -1,6 +1,3 @@
-extern crate chrono;
-extern crate pbar;
-
 use chrono::prelude::*;
 use pbar::{ProgressBar, ProgressBarStyle};
 
@@ -18,10 +15,7 @@ fn main() {
     let mut pbar = ProgressBar::stdout(days as u64);
 
     let mut style = ProgressBarStyle::customizable();
-    style
-        .counter(None, None)
-        .percent()
-        .bar(" ██░ ", Some(30));
+    style.counter(None, None).percent().bar(" ██░ ", Some(30));
 
     pbar.set_title(&format!("{} year progress:", dt.year())[..])
         .set_style(style);

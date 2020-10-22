@@ -1,7 +1,7 @@
 use std::fmt;
 use std::time::Duration;
 
-use util::*;
+use crate::util::*;
 
 const KIB: f64 = 1024.;
 const MIB: f64 = 1_048_576.;

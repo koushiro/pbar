@@ -1,8 +1,3 @@
-#[cfg(unix)]
-extern crate libc;
-#[cfg(windows)]
-extern crate winapi;
-
 /// A abstract terminal module.
 mod term;
 
@@ -12,7 +7,8 @@ mod multi;
 mod style;
 mod util;
 
-pub use bar::ProgressBar;
-pub use format::{TimeFormat, UnitFormat};
-pub use multi::MultiProgressBar;
-pub use style::ProgressBarStyle;
+pub use self::term::Term;
+pub use self::bar::ProgressBar;
+pub use self::format::{TimeFormat, UnitFormat};
+pub use self::multi::MultiProgressBar;
+pub use self::style::ProgressBarStyle;

@@ -3,10 +3,10 @@ use std::iter::repeat;
 use std::sync::mpsc;
 use std::time::{Duration, Instant};
 
-use format::*;
-use style::*;
-use term::*;
-use util::*;
+use crate::format::*;
+use crate::style::*;
+use crate::term::*;
+use crate::util::*;
 
 pub struct ProgressBarDrawInfo {
     pub line: String,
@@ -46,7 +46,9 @@ impl ProgressBarTarget {
 
     pub fn terminal_width(&self) -> usize {
         match self.kind {
-            ProgressBarTargetKind::Term(ref term) => term.terminal_size().0,
+            ProgressBarTargetKind::Term(ref term) => {
+                term.terminal_size().unwrap_or(TERM_DEFAULT_WINDOW).0
+            }
             _ => 0,
         }
     }
