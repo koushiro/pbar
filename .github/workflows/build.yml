@@ -38,8 +38,7 @@ jobs:
           command: clippy
           args: --all-targets -- -D warnings
 
-      - name: Run example year_progress
+      - name: Run cargo test
         uses: actions-rs/cargo@v1
         with:
-          command: run
-          args: --example year_progress
+          command: test
